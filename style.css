@@ -1,9 +1,11 @@
+/* 全要素のマージン・パディングを0にリセットし、box-sizingをborder-boxに設定 */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+/* HTML要素 */
 html {
   width: 100%;
   height: 100%;
@@ -11,6 +13,7 @@ html {
   padding: 0;
 }
 
+/* ボディ要素 */
 body {
   font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
   background-color: #000;
@@ -37,6 +40,7 @@ body {
   /* 背景画像はJavaScriptで動的に設定 */
 }
 
+/* コンテナ */
 .container {
   width: 100%;
   height: 100vh;
@@ -50,6 +54,7 @@ body {
   padding: 10px;
 }
 
+/* タイトル */
 .title {
   text-align: center;
   font-size: 24px;
@@ -61,13 +66,7 @@ body {
   flex-shrink: 0;
 }
 
-/* 学習画面のタイトル */
-#screen2 .title {
-  margin: 3px 0;
-  font-size: 18px;
-  padding: 5px 0;
-}
-
+/* セクション */
 .section {
   margin: 15px 0;
 }
@@ -81,32 +80,25 @@ body {
   margin-bottom: 20px;
 }
 
+/* 初期画面のListセクションのテーブルコンテナ */
 #screen1 .section:last-of-type .table-container {
   flex: 1;
   min-height: 0;
 }
 
-/* 学習画面のセクション間隔を調整 */
-#screen2 .section {
-  margin: 5px 0;
-}
-
+/* セクションラベル */
 .section-label {
   font-size: 16px;
   margin-bottom: 10px;
 }
 
-/* 学習画面のセクションラベル */
-#screen2 .section-label {
-  font-size: 14px;
-  margin-bottom: 5px;
-}
-
+/* セクションラベルの前に記号を追加 */
 .section-label::before {
   content: '◆';
   margin-right: 5px;
 }
 
+/* セレクトボックス */
 select {
   width: 100%;
   padding: 10px;
@@ -121,12 +113,14 @@ select {
   padding-right: 35px;
 }
 
+/* メッセージ */
 .message {
   text-align: center;
   color: #666;
   margin: 20px 0;
 }
 
+/* テーブルコンテナ */
 .table-container {
   max-height: 300px;
   overflow-y: auto;
@@ -136,17 +130,20 @@ select {
   -webkit-overflow-scrolling: touch;
 }
 
+/* テーブル */
 table {
   width: 100%;
   border-collapse: collapse;
 }
 
+/* テーブルヘッダーとセル */
 th, td {
   padding: 10px;
   text-align: left;
   border-bottom: 1px solid #ddd;
 }
 
+/* テーブルヘッダー */
 th {
   background-color: #f5f5f5;
   font-weight: bold;
@@ -155,6 +152,7 @@ th {
   z-index: 10;
 }
 
+/* 最後の行のセル */
 tr:last-child td {
   border-bottom: none;
 }
@@ -164,6 +162,7 @@ tr:last-child td {
   white-space: pre-line;
 }
 
+/* スタートボタン */
 .start-button {
   width: 100%;
   padding: 15px;
@@ -179,20 +178,16 @@ tr:last-child td {
   flex-shrink: 0;
 }
 
+/* スタートボタン押下時 */
 .start-button:active {
   background-color: #45a049;
 }
 
+/* 学習時間 */
 .learning-time {
   font-size: 16px;
   margin: 5px 0;
   flex-shrink: 0;
-}
-
-/* 学習画面の学習時間 */
-#screen2 .learning-time {
-  font-size: 16px;
-  margin: 3px 0;
 }
 
 /* TOPページの学習時間 */
@@ -201,17 +196,13 @@ tr:last-child td {
   margin: 3px 0;
 }
 
+/* 質問情報 */
 .question-info {
   font-size: 16px;
   margin: 5px 0;
 }
 
-/* 学習画面の質問情報 */
-#screen2 .question-info {
-  font-size: 16px;
-  margin: 3px 0;
-}
-
+/* 質問テキスト */
 .question-text {
   font-size: 18px;
   margin: 10px 0;
@@ -221,40 +212,7 @@ tr:last-child td {
   white-space: pre-line;
 }
 
-/* 学習画面の質問テキスト */
-#screen2 .question-text {
-  font-size: 16px;
-  margin: 5px 0;
-  padding: 8px;
-  border-radius: 6px;
-}
-
-.stopwatch {
-  font-size: 18px;
-  font-weight: bold;
-  margin: 10px 0;
-  font-family: 'Courier New', monospace;
-}
-
-/* 学習画面のストップウォッチ */
-#screen2 .stopwatch {
-  font-size: 16px;
-  margin: 5px 0;
-}
-
-.button-group {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 15px;
-  margin: 10px 0;
-}
-
-/* 学習画面のボタングループ */
-#screen2 .button-group {
-  margin: 5px 0;
-}
-
+/* アイコンボタン */
 .icon-button {
   width: 50px;
   height: 50px;
@@ -267,32 +225,25 @@ tr:last-child td {
   justify-content: center;
 }
 
-/* 学習画面のアイコンボタン（1/2サイズ） */
-#screen2 .icon-button {
-  width: 25px;
-  height: 25px;
-}
-
+/* アイコンボタンの画像 */
 .icon-button img {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
 
+/* アイコンボタン無効時 */
 .icon-button:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
 
+/* 回答セクション */
 .answer-section {
   margin: 10px 0;
 }
 
-/* 学習画面の回答セクション */
-#screen2 .answer-section {
-  margin: 5px 0;
-}
-
+/* 回答テキスト */
 .answer-text {
   font-size: 18px;
   margin: 5px 0;
@@ -302,14 +253,7 @@ tr:last-child td {
   white-space: pre-line;
 }
 
-/* 学習画面の回答テキスト */
-#screen2 .answer-text {
-  font-size: 16px;
-  margin: 3px 0;
-  padding: 8px;
-  border-radius: 6px;
-}
-
+/* 回答テキスト非表示 */
 .answer-hidden {
   background-color: #000;
   color: #000;
@@ -327,21 +271,12 @@ tr:last-child td {
   box-sizing: border-box;
 }
 
-/* 学習画面のAnswerボタン押下後の回答テキスト */
-#screen2 #answerTextDisplay {
-  padding: 12px 16px !important;
-  min-height: 40px;
-}
-
+/* ノートセクション */
 .note-section {
   margin: 10px 0;
 }
 
-/* 学習画面のノートセクション */
-#screen2 .note-section {
-  margin: 5px 0;
-}
-
+/* ノートテキスト */
 .note-text {
   font-size: 16px;
   color: #666;
@@ -352,14 +287,7 @@ tr:last-child td {
   white-space: pre-line;
 }
 
-/* 学習画面のノートテキスト */
-#screen2 .note-text {
-  font-size: 16px;
-  margin: 3px 0;
-  padding: 6px;
-  border-radius: 6px;
-}
-
+/* ナビゲーションバー */
 .navigation-bar {
   display: flex;
   justify-content: flex-end;
@@ -372,6 +300,7 @@ tr:last-child td {
   position: relative;
 }
 
+/* ナビゲーションボタン */
 .nav-button {
   width: 30px;
   height: 30px;
@@ -401,21 +330,25 @@ tr:last-child td {
   margin-right: 20px;
 }
 
+/* ナビゲーションボタンの画像 */
 .nav-button img {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
 
+/* ナビゲーションボタン無効時 */
 .nav-button:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
 
+/* 前へボタンの画像（180度回転） */
 .nav-button.arrow-left img {
   transform: rotate(180deg);
 }
 
+/* エラーメッセージ */
 .error-message {
   color: #f44336;
   text-align: center;
@@ -439,6 +372,7 @@ tr:last-child td {
   align-items: center;
 }
 
+/* モーダルオーバーレイ表示時 */
 .modal-overlay.active {
   display: flex;
 }
@@ -475,10 +409,12 @@ tr:last-child td {
   line-height: 1;
 }
 
+/* モーダル閉じるボタンホバー時 */
 .modal-close-button:hover {
   color: #666;
 }
 
+/* モーダル閉じるボタン押下時 */
 .modal-close-button:active {
   color: #999;
 }
@@ -488,21 +424,25 @@ tr:last-child td {
   margin-top: 10px;
 }
 
+/* モーダル回答セクション */
 .modal-answer-section {
   margin: 15px 0;
 }
 
+/* モーダル回答ラベル */
 .modal-answer-label {
   font-size: 16px;
   font-weight: bold;
   margin-bottom: 10px;
 }
 
+/* モーダル回答ラベルの前に記号を追加 */
 .modal-answer-label::before {
   content: '◆';
   margin-right: 5px;
 }
 
+/* モーダル回答テキスト */
 .modal-answer-text {
   font-size: 18px;
   padding: 12px;
@@ -512,20 +452,24 @@ tr:last-child td {
   border: 1px solid #ddd;
 }
 
+/* モーダルノートセクション */
 .modal-note-section {
   margin: 15px 0;
 }
 
+/* モーダルノートラベル */
 .modal-note-label {
   font-size: 14px;
   margin-bottom: 10px;
 }
 
+/* モーダルノートラベルの前に記号を追加 */
 .modal-note-label::before {
   content: '◆';
   margin-right: 5px;
 }
 
+/* モーダルノートテキスト */
 .modal-note-text {
   font-size: 14px;
   color: #666;
@@ -541,10 +485,12 @@ tr:last-child td {
   cursor: pointer;
 }
 
+/* リスト行ホバー時 */
 #listTable tbody tr:hover {
   background-color: #f5f5f5;
 }
 
+/* 画面 */
 .screen {
   display: none;
   height: 100%;
@@ -553,6 +499,7 @@ tr:last-child td {
   -webkit-overflow-scrolling: touch;
 }
 
+/* 画面表示時 */
 .screen.active {
   display: block;
 }
@@ -565,6 +512,7 @@ tr:last-child td {
   flex-direction: column;
 }
 
+/* 初期画面表示時 */
 #screen1.active {
   display: flex;
 }
@@ -578,6 +526,82 @@ tr:last-child td {
   min-height: 0;
 }
 
+/* 学習画面のタイトル */
+#screen2 .title {
+  margin: 3px 0;
+  font-size: 18px;
+  padding: 5px 0;
+}
+
+/* 学習画面のセクション間隔を調整 */
+#screen2 .section {
+  margin: 5px 0;
+}
+
+/* 学習画面のセクションラベル */
+#screen2 .section-label {
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+/* 学習画面の学習時間 */
+#screen2 .learning-time {
+  font-size: 14px;
+  margin: 3px 0;
+}
+
+/* 学習画面の質問情報 */
+#screen2 .question-info {
+  font-size: 16px;
+  margin: 3px 0;
+}
+
+/* 学習画面の質問テキスト */
+#screen2 .question-text {
+  font-size: 16px;
+  margin: 5px 0;
+  padding: 8px;
+  border-radius: 6px;
+}
+
+/* 学習画面のアイコンボタン（1/2サイズ） */
+#screen2 .icon-button {
+  width: 25px;
+  height: 25px;
+}
+
+/* 学習画面の回答セクション */
+#screen2 .answer-section {
+  margin: 5px 0;
+}
+
+/* 学習画面の回答テキスト */
+#screen2 .answer-text {
+  font-size: 16px;
+  margin: 3px 0;
+  padding: 8px;
+  border-radius: 6px;
+}
+
+/* 学習画面のAnswerボタン押下後の回答テキスト */
+#screen2 #answerTextDisplay {
+  padding: 12px 16px !important;
+  min-height: 40px;
+}
+
+/* 学習画面のノートセクション */
+#screen2 .note-section {
+  margin: 5px 0;
+}
+
+/* 学習画面のノートテキスト */
+#screen2 .note-text {
+  font-size: 16px;
+  margin: 3px 0;
+  padding: 6px;
+  border-radius: 6px;
+}
+
 /* 学習画面 */
 #screen2 {
   display: none;
@@ -586,6 +610,7 @@ tr:last-child td {
   flex-direction: column;
 }
 
+/* 学習画面表示時 */
 #screen2.active {
   display: flex;
 }
@@ -607,6 +632,7 @@ tr:last-child td {
   margin: 3px 0;
 }
 
+/* 再生ボタンコンテナ */
 .play-button-container {
   display: flex;
   justify-content: center;
@@ -644,6 +670,7 @@ tr:last-child td {
   min-height: 40px;
 }
 
+/* Answerボタン押下時 */
 .answer-button:active {
   background-color: #333;
 }
@@ -657,7 +684,7 @@ tr:last-child td {
   border-radius: 0;
 }
 
-/* Answerテキストの点滅アニメーション */
+/* Answerテキストの点滅アニメーション定義 */
 @keyframes answerBlink {
   0%, 100% {
     opacity: 1;
@@ -667,10 +694,12 @@ tr:last-child td {
   }
 }
 
+/* Answerテキスト点滅時 */
 .answer-text.blinking {
   animation: answerBlink 2s ease-in-out infinite;
 }
 
+/* Answerストップウォッチ */
 .answer-stopwatch {
   font-family: 'Courier New', monospace;
   font-size: 18px;
@@ -713,76 +742,150 @@ tr:last-child td {
 
 /* レスポンシブ: 小さい画面でのフォントサイズ調整 */
 @media screen and (max-width: 480px) {
+  /* タイトル(480px) */
   .title {
-    font-size: 18px !important;
+    font-size: 20px !important;
   }
-  
-  #screen2 .title {
-    font-size: 18px !important;
-  }
-  
+    
+  /* セクションラベル(480px) */
   .section-label {
     font-size: 16px !important;
   }
-  
-  #screen2 .section-label {
-    font-size: 16px !important;
-  }
-  
+    
+  /* セレクトボックス(480px) */
   select {
     font-size: 16px !important;
   }
   
+  /* 質問テキスト(480px) */
   .question-text {
     font-size: 16px !important;
   }
-  
-  #screen2 .question-text {
-    font-size: 16px !important;
-  }
-  
+    
+  /* 回答テキスト(480px) */
   .answer-text {
     font-size: 16px !important;
   }
   
-  #screen2 .answer-text {
-    font-size: 16px !important;
-  }
-  
+  /* ノートテキスト(480px) */
   .note-text {
     font-size: 16px !important;
   }
   
-  #screen2 .note-text {
-    font-size: 16px !important;
-  }
-  
-  .learning-time {
-    font-size: 16px !important;
-  }
-  
-  #screen2 .learning-time {
-    font-size: 16px !important;
-  }
-  
+  /* 質問情報(480px) */
   .question-info {
     font-size: 16px !important;
   }
   
-  #screen2 .question-info {
-    font-size: 16px !important;
-  }
-  
-  .stopwatch {
-    font-size: 16px !important;
-  }
-  
-  #screen2 .stopwatch {
-    font-size: 16px !important;
-  }
-  
+  /* スタートボタン(480px) */
   .start-button {
     font-size: 16px !important;
   }
+
+  /* 学習画面のタイトル(480px) */
+  #screen2 .title {
+    font-size: 18px !important;
+  }
+
+  /* 学習画面のセクションラベル(480px) */
+  #screen2 .section-label {
+    font-size: 14px !important;
+  }
+
+  /* 学習画面の質問テキスト(480px) */
+  #screen2 .question-text {
+    font-size: 16px !important;
+  }
+
+  /* 学習画面の回答テキスト(480px) */
+  #screen2 .answer-text {
+    font-size: 16px !important;
+  }
+
+  /* 学習画面のノートテキスト(480px) */
+  #screen2 .note-text {
+    font-size: 16px !important;
+  }
+  
+  /* 学習画面の質問情報(480px) */
+  #screen2 .question-info {
+    font-size: 16px !important;
+  }
+
+  /* 学習時間(480px) */
+  .learning-time {
+    font-size: 14px !important;
+  }
+
+  /* TOPページの学習時間(480px) */
+  #screen1 .learning-time {
+    font-size: 14px !important;
+  }
+
+  /* 学習画面の学習時間(480px) */
+  #screen2 .learning-time {
+    font-size: 12px !important;
+  }
+
+  /* Answerボタン(480px) */
+  .answer-button {
+    font-size: 16px !important;
+  }
+
+  /* 学習画面のAnswerボタン(480px) */
+  #screen2 .answer-button {
+    font-size: 14px !important;
+  }
+
+  /* Answerストップウォッチ(480px) */
+  .answer-stopwatch {
+    font-size: 16px !important;
+  }
+
+  /* 学習画面のAnswerストップウォッチ(480px) */
+  #screen2 .answer-stopwatch {
+    font-size: 14px !important;
+  }
+
+  /* Answerボタン押下時の停止時間表示(480px) */
+  .answer-time-display {
+    font-size: 16px !important;
+  }
+
+  /* 学習画面の停止時間表示(480px) */
+  #screen2 .answer-time-display {
+    font-size: 14px !important;
+  }
+
+  /* 学習画面のカテゴリ表示(480px) */
+  #screen2 #currentCategory {
+    font-size: 14px !important;
+  }
+
+  /* モーダル閉じるボタン(480px) */
+  .modal-close-button {
+    font-size: 20px !important;
+  }
+
+  /* モーダル回答ラベル(480px) */
+  .modal-answer-label {
+    font-size: 14px !important;
+  }
+
+  /* モーダル回答テキスト(480px) */
+  .modal-answer-text {
+    font-size: 16px !important;
+  }
+
+  /* モーダルノートラベル(480px) */
+  .modal-note-label {
+    font-size: 12px !important;
+  }
+
+  /* モーダルノートテキスト(480px) */
+  .modal-note-text {
+    font-size: 12px !important;
+  }
+    
 }
 
