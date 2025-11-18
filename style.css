@@ -184,20 +184,20 @@ tr:last-child td {
 }
 
 .learning-time {
-  font-size: 14px;
+  font-size: 16px;
   margin: 5px 0;
   flex-shrink: 0;
 }
 
 /* 学習画面の学習時間 */
 #screen2 .learning-time {
-  font-size: 12px;
+  font-size: 16px;
   margin: 3px 0;
 }
 
 /* TOPページの学習時間 */
 #screen1 .learning-time {
-  font-size: 12px;
+  font-size: 16px;
   margin: 3px 0;
 }
 
@@ -208,7 +208,7 @@ tr:last-child td {
 
 /* 学習画面の質問情報 */
 #screen2 .question-info {
-  font-size: 14px;
+  font-size: 16px;
   margin: 3px 0;
 }
 
@@ -343,7 +343,7 @@ tr:last-child td {
 }
 
 .note-text {
-  font-size: 14px;
+  font-size: 16px;
   color: #666;
   margin: 5px 0;
   padding: 8px;
@@ -354,7 +354,7 @@ tr:last-child td {
 
 /* 学習画面のノートテキスト */
 #screen2 .note-text {
-  font-size: 12px;
+  font-size: 16px;
   margin: 3px 0;
   padding: 6px;
   border-radius: 6px;
@@ -603,7 +603,7 @@ tr:last-child td {
 
 /* 学習画面のカテゴリ表示 */
 #screen2 #currentCategory {
-  font-size: 14px;
+  font-size: 16px;
   margin: 3px 0;
 }
 
@@ -722,15 +722,15 @@ tr:last-child td {
   }
   
   .section-label {
-    font-size: 14px !important;
+    font-size: 16px !important;
   }
   
   #screen2 .section-label {
-    font-size: 12px !important;
+    font-size: 16px !important;
   }
   
   select {
-    font-size: 12px !important;
+    font-size: 16px !important;
   }
   
   .question-text {
@@ -738,7 +738,7 @@ tr:last-child td {
   }
   
   #screen2 .question-text {
-    font-size: 14px !important;
+    font-size: 16px !important;
   }
   
   .answer-text {
@@ -746,31 +746,31 @@ tr:last-child td {
   }
   
   #screen2 .answer-text {
-    font-size: 14px !important;
+    font-size: 16px !important;
   }
   
   .note-text {
-    font-size: 12px !important;
+    font-size: 16px !important;
   }
   
   #screen2 .note-text {
-    font-size: 10px !important;
+    font-size: 16px !important;
   }
   
   .learning-time {
-    font-size: 12px !important;
+    font-size: 16px !important;
   }
   
   #screen2 .learning-time {
-    font-size: 10px !important;
+    font-size: 16px !important;
   }
   
   .question-info {
-    font-size: 14px !important;
+    font-size: 16px !important;
   }
   
   #screen2 .question-info {
-    font-size: 12px !important;
+    font-size: 16px !important;
   }
   
   .stopwatch {
@@ -778,161 +778,11 @@ tr:last-child td {
   }
   
   #screen2 .stopwatch {
-    font-size: 14px !important;
+    font-size: 16px !important;
   }
   
   .start-button {
     font-size: 16px !important;
-  }
-}
-
-/* レスポンシブ: 非常に小さい画面でのフォントサイズ調整 */
-@media screen and (max-width: 375px) {
-  .title {
-    font-size: 18px !important;
-  }
-  
-  #screen2 .title {
-    font-size: 18px !important;
-  }
-  
-  .section-label {
-    font-size: 14px !important;
-  }
-  
-  #screen2 .section-label {
-    font-size: 12px !important;
-  }
-  
-  select {
-    font-size: 14px !important;
-  }
-  
-  .question-text {
-    font-size: 16px !important;
-  }
-  
-  #screen2 .question-text {
-    font-size: 14px !important;
-  }
-  
-  .answer-text {
-    font-size: 16px !important;
-  }
-  
-  #screen2 .answer-text {
-    font-size: 14px !important;
-  }
-  
-  .note-text {
-    font-size: 12px !important;
-  }
-  
-  #screen2 .note-text {
-    font-size: 10px !important;
-  }
-  
-  .learning-time {
-    font-size: 12px !important;
-  }
-  
-  #screen2 .learning-time {
-    font-size: 10px !important;
-  }
-  
-  .question-info {
-    font-size: 14px !important;
-  }
-  
-  #screen2 .question-info {
-    font-size: 12px !important;
-  }
-  
-  .stopwatch {
-    font-size: 16px !important;
-  }
-  
-  #screen2 .stopwatch {
-    font-size: 14px !important;
-  }
-  
-  .start-button {
-    font-size: 16px !important;
-  }
-}
-
-/* レスポンシブ: 最小サイズの画面でのフォントサイズ調整 */
-@media screen and (max-width: 320px) {
-  .title {
-    font-size: 18px !important;
-  }
-  
-  #screen2 .title {
-    font-size: 22px !important;
-  }
-  
-  .section-label {
-    font-size: 18px !important;
-  }
-  
-  #screen2 .section-label {
-    font-size: 26px !important;
-  }
-  
-  select {
-    font-size: 18px !important;
-  }
-  
-  .question-text {
-    font-size: 20px !important;
-  }
-  
-  #screen2 .question-text {
-    font-size: 18px !important;
-  }
-  
-  .answer-text {
-    font-size: 20px !important;
-  }
-  
-  #screen2 .answer-text {
-    font-size: 18px !important;
-  }
-  
-  .note-text {
-    font-size: 20px !important;
-  }
-  
-  #screen2 .note-text {
-    font-size: 18px !important;
-  }
-  
-  .learning-time {
-    font-size: 20px !important;
-  }
-  
-  #screen2 .learning-time {
-    font-size: 18px !important;
-  }
-  
-  .question-info {
-    font-size: 20px !important;
-  }
-  
-  #screen2 .question-info {
-    font-size: 18px !important;
-  }
-  
-  .stopwatch {
-    font-size: 20px !important;
-  }
-  
-  #screen2 .stopwatch {
-    font-size: 20px !important;
-  }
-  
-  .start-button {
-    font-size: 20px !important;
   }
 }
 
