@@ -122,7 +122,6 @@ select {
 
 /* テーブルコンテナ */
 .table-container {
-  max-height: 300px;
   overflow-y: auto;
   border: 1px solid #000;
   background-color: #fff;
@@ -174,7 +173,7 @@ tr:last-child td {
   border-radius: 8px;
   cursor: pointer;
   margin-top: 0;
-  margin-bottom: 5px;
+  margin-bottom: 30px;
   flex-shrink: 0;
 }
 
