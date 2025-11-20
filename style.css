@@ -44,7 +44,7 @@ body {
 .container {
   width: 100%;
   height: 100vh;
-  padding: 20px;
+  padding: 10px 20px;
   position: relative;
   overflow: hidden;
 }
@@ -82,8 +82,12 @@ body {
 
 /* 初期画面のListセクションのテーブルコンテナ */
 #screen1 .section:last-of-type .table-container {
-  flex: 1;
+  flex: 0 0 auto;
+  max-height: 100%;
   min-height: 0;
+  display: flex;
+  align-items: flex-start;
+  overflow-y: auto;
 }
 
 /* セクションラベル */
@@ -133,6 +137,35 @@ select {
 table {
   width: 100%;
   border-collapse: collapse;
+  height: fit-content;
+  align-self: flex-start;
+}
+
+/* リストテーブルの高さ制御 */
+#listTable {
+  display: table;
+  width: 100%;
+  table-layout: auto;
+}
+
+/* リストテーブルのtbody */
+#listTable tbody {
+  display: table-row-group;
+}
+
+/* リストテーブルのthead */
+#listTable thead {
+  display: table-header-group;
+}
+
+/* リストテーブルのthead内のtr */
+#listTable thead tr {
+  display: table-row;
+}
+
+/* リストテーブルのthead内のth */
+#listTable thead th {
+  display: table-cell;
 }
 
 /* テーブルヘッダーとセル */
@@ -154,11 +187,13 @@ th {
 /* 最後の行のセル */
 tr:last-child td {
   border-bottom: none;
+  height: auto;
 }
 
 /* リスト表示のテーブルセルで改行を表示 */
 #listTable td {
   white-space: pre-line;
+  display: table-cell;
 }
 
 /* スタートボタン */
@@ -172,8 +207,8 @@ tr:last-child td {
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  margin-top: 0;
-  margin-bottom: 60px;
+  margin-top: 10px;
+  margin-bottom: 10px;
   flex-shrink: 0;
 }
 
@@ -482,6 +517,8 @@ tr:last-child td {
 /* リスト行のクリック可能スタイル */
 #listTable tbody tr {
   cursor: pointer;
+  height: auto;
+  display: table-row;
 }
 
 /* リスト行ホバー時 */
