@@ -169,7 +169,8 @@ table {
 }
 
 /* テーブルヘッダーとセル */
-th, td {
+th,
+td {
   padding: 10px;
   text-align: left;
   border-bottom: 1px solid #ddd;
@@ -210,6 +211,10 @@ tr:last-child td {
   margin-top: 10px;
   margin-bottom: 10px;
   flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 100;
+  background-color: #4CAF50;
 }
 
 /* スタートボタン押下時 */
@@ -561,7 +566,7 @@ tr:last-child td {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  max-height: calc(100vh - 120px);
+  max-height: calc(100vh - 200px);
 }
 
 /* 学習画面のタイトル */
@@ -724,9 +729,12 @@ tr:last-child td {
 
 /* Answerテキストの点滅アニメーション定義 */
 @keyframes answerBlink {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }
@@ -769,7 +777,8 @@ tr:last-child td {
   font-family: 'Courier New', monospace;
   font-size: 18px;
   font-weight: bold;
-  padding-left: 0.5em; /* 半角スペース2個分 */
+  padding-left: 0.5em;
+  /* 半角スペース2個分 */
   margin: 0;
 }
 
@@ -780,41 +789,42 @@ tr:last-child td {
 
 /* レスポンシブ: 小さい画面でのフォントサイズ調整 */
 @media screen and (max-width: 480px) {
+
   /* タイトル(480px) */
   .title {
     font-size: 22px !important;
   }
-    
+
   /* セクションラベル(480px) */
   .section-label {
     font-size: 16px !important;
   }
-    
+
   /* セレクトボックス(480px) */
   select {
     font-size: 16px !important;
   }
-  
+
   /* 質問テキスト(480px) */
   .question-text {
     font-size: 16px !important;
   }
-    
+
   /* 回答テキスト(480px) */
   .answer-text {
     font-size: 16px !important;
   }
-  
+
   /* ノートテキスト(480px) */
   .note-text {
     font-size: 16px !important;
   }
-  
+
   /* 質問情報(480px) */
   .question-info {
     font-size: 16px !important;
   }
-  
+
   /* スタートボタン(480px) */
   .start-button {
     font-size: 16px !important;
@@ -844,7 +854,7 @@ tr:last-child td {
   #screen2 .note-text {
     font-size: 16px !important;
   }
-  
+
   /* 学習画面の質問情報(480px) */
   #screen2 .question-info {
     font-size: 14px !important;
@@ -924,6 +934,5 @@ tr:last-child td {
   .modal-note-text {
     font-size: 12px !important;
   }
-    
-}
 
+}
