@@ -668,7 +668,7 @@ tr:last-child td {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  max-height: calc(100vh - 150px);
+  max-height: calc(100vh - 180px);
   -webkit-overflow-scrolling: touch;
 }
 
