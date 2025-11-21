@@ -11,6 +11,13 @@ var stopwatchElapsed = 0;
 var isStopwatchRunning = false;
 var isAnswerShown = false;
 
+// 音声キャッシュ（メモリキャッシュ）
+var audioCache = {};
+
+// キャッシュの設定
+var CACHE_PREFIX = 'tts_audio_'; // localStorageのキープレフィックス
+var MAX_CACHE_SIZE = 10 * 1024 * 1024; // 最大キャッシュサイズ（10MB）
+
 // スプレッドシートID
 var SPREADSHEET_ID = '1pnlKMrp07Yz4MMCFByw8F04ttT3Cf6xDSX7zf5R64ZA';
 
@@ -595,6 +602,187 @@ function playAnswer() {
     return;
   }
   
+  var text = item.answer;
+  
+  // キャッシュから音声データを取得
+  var cachedAudio = getCachedAudio(text);
+  if (cachedAudio) {
+    // キャッシュから即座に再生
+    playAudioFromCache(cachedAudio);
+    return;
+  }
+  
+  // キャッシュにない場合はAPI呼び出し
+  fetchAudioFromAPI(text);
+}
+
+/**
+ * キャッシュから音声データを取得
+ * メモリキャッシュ → localStorage の順で確認
+ */
+function getCachedAudio(text) {
+  // メモリキャッシュを確認
+  if (audioCache[text]) {
+    return audioCache[text];
+  }
+  
+  // localStorageを確認
+  try {
+    var cacheKey = CACHE_PREFIX + hashText(text);
+    var cachedData = localStorage.getItem(cacheKey);
+    if (cachedData) {
+      var audioData = JSON.parse(cachedData);
+      // メモリキャッシュにも保存
+      audioCache[text] = audioData;
+      return audioData;
+    }
+  } catch (e) {
+    // localStorageが使用できない場合やエラーが発生した場合は無視
+    console.warn('Cache read error:', e);
+  }
+  
+  return null;
+}
+
+/**
+ * 音声データをキャッシュに保存
+ */
+function saveAudioToCache(text, audioContent) {
+  var audioData = {
+    audioContent: audioContent,
+    timestamp: Date.now()
+  };
+  
+  // メモリキャッシュに保存
+  audioCache[text] = audioData;
+  
+  // localStorageに保存（サイズ制限を考慮）
+  try {
+    var cacheKey = CACHE_PREFIX + hashText(text);
+    var dataToStore = JSON.stringify(audioData);
+    
+    // キャッシュサイズをチェック
+    if (getCacheSize() + dataToStore.length > MAX_CACHE_SIZE) {
+      // キャッシュが大きすぎる場合は古いエントリを削除
+      clearOldCacheEntries();
+    }
+    
+    localStorage.setItem(cacheKey, dataToStore);
+  } catch (e) {
+    // localStorageが満杯の場合やエラーが発生した場合は無視
+    console.warn('Cache save error:', e);
+    // 古いキャッシュを削除して再試行
+    try {
+      clearOldCacheEntries();
+      localStorage.setItem(cacheKey, JSON.stringify(audioData));
+    } catch (e2) {
+      // それでも失敗した場合はメモリキャッシュのみ使用
+      console.warn('Cache save retry failed:', e2);
+    }
+  }
+}
+
+/**
+ * テキストをハッシュ化（localStorageのキー用）
+ */
+function hashText(text) {
+  var hash = 0;
+  for (var i = 0; i < text.length; i++) {
+    var char = text.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(36);
+}
+
+/**
+ * 現在のキャッシュサイズを取得
+ */
+function getCacheSize() {
+  var totalSize = 0;
+  try {
+    for (var i = 0; i < localStorage.length; i++) {
+      var key = localStorage.key(i);
+      if (key && key.indexOf(CACHE_PREFIX) === 0) {
+        var value = localStorage.getItem(key);
+        if (value) {
+          totalSize += value.length;
+        }
+      }
+    }
+  } catch (e) {
+    // エラーが発生した場合は0を返す
+  }
+  return totalSize;
+}
+
+/**
+ * 古いキャッシュエントリを削除（FIFO方式）
+ */
+function clearOldCacheEntries() {
+  try {
+    var entries = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var key = localStorage.key(i);
+      if (key && key.indexOf(CACHE_PREFIX) === 0) {
+        var value = localStorage.getItem(key);
+        if (value) {
+          try {
+            var data = JSON.parse(value);
+            entries.push({
+              key: key,
+              timestamp: data.timestamp || 0
+            });
+          } catch (e) {
+            // パースエラーは無視
+          }
+        }
+      }
+    }
+    
+    // タイムスタンプでソート（古い順）
+    entries.sort(function(a, b) {
+      return a.timestamp - b.timestamp;
+    });
+    
+    // 古いエントリの50%を削除
+    var deleteCount = Math.floor(entries.length / 2);
+    for (var j = 0; j < deleteCount; j++) {
+      localStorage.removeItem(entries[j].key);
+      // メモリキャッシュからも削除（該当するものがあれば）
+      for (var text in audioCache) {
+        if (hashText(text) === entries[j].key.replace(CACHE_PREFIX, '')) {
+          delete audioCache[text];
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Cache clear error:', e);
+  }
+}
+
+/**
+ * キャッシュから音声を再生
+ */
+function playAudioFromCache(audioData) {
+  if (!audioData || !audioData.audioContent) {
+    return;
+  }
+  
+  try {
+    var audio = new Audio('data:audio/mp3;base64,' + audioData.audioContent);
+    audio.play().catch(function(error) {
+      showError('音声の再生に失敗しました: ' + error.toString());
+    });
+  } catch (error) {
+    showError('音声の再生に失敗しました: ' + error.toString());
+  }
+}
+
+/**
+ * APIから音声データを取得
+ */
+function fetchAudioFromAPI(text) {
   // 再生ボタンを無効化（連続クリック防止）
   var playButton = document.getElementById('playButton');
   if (playButton) {
@@ -604,7 +792,7 @@ function playAnswer() {
   
   // リクエストパラメータを準備
   var params = new URLSearchParams();
-  params.append('text', item.answer);
+  params.append('text', text);
   params.append('referer', window.location.origin);
   
   // Google Apps Scriptにリクエストを送信
@@ -629,6 +817,9 @@ function playAnswer() {
     }
     
     if (data.success && data.audioContent) {
+      // キャッシュに保存
+      saveAudioToCache(text, data.audioContent);
+      
       // 音声データ（base64）を再生
       var audio = new Audio('data:audio/mp3;base64,' + data.audioContent);
       audio.play().catch(function(error) {
