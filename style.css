@@ -277,6 +277,35 @@ tr:last-child td {
   cursor: not-allowed;
 }
 
+/* ローディングスピナー */
+.play-button-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(0, 0, 0, 0.2);
+  border-top-color: #0066cc;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+/* 学習画面のローディングスピナー */
+#screen2 .play-button-spinner {
+  width: 20px;
+  height: 20px;
+  border-width: 2.5px;
+  border-top-color: #0066cc;
+}
+
+/* スピナーアニメーション */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* 回答セクション */
 .answer-section {
   margin: 10px 0;

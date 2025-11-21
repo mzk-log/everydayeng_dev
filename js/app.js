@@ -786,15 +786,45 @@ function playAudioFromCache(audioData) {
 }
 
 /**
- * APIから音声データを取得
+ * ローディング表示を開始
  */
-function fetchAudioFromAPI(text) {
-  // 再生ボタンを無効化（連続クリック防止）
+function showPlayButtonLoading() {
   var playButton = document.getElementById('playButton');
   if (playButton) {
     playButton.disabled = true;
-    playButton.style.opacity = '0.5';
+    // スピナーを表示
+    var spinner = document.createElement('div');
+    spinner.className = 'play-button-spinner';
+    spinner.id = 'playButtonSpinner';
+    playButton.innerHTML = '';
+    playButton.appendChild(spinner);
   }
+}
+
+/**
+ * ローディング表示を終了
+ */
+function hidePlayButtonLoading() {
+  var playButton = document.getElementById('playButton');
+  if (playButton) {
+    playButton.disabled = false;
+    // 元の画像を復元
+    var playButtonImg = document.createElement('img');
+    playButtonImg.src = 'img/play-button.png';
+    playButtonImg.alt = '再生';
+    playButton.innerHTML = '';
+    playButton.appendChild(playButtonImg);
+  }
+}
+
+/**
+ * APIから音声データを取得
+ */
+function fetchAudioFromAPI(text) {
+  // ローディング表示を開始
+  showPlayButtonLoading();
+  
+  var playButton = document.getElementById('playButton');
   
   // リクエストパラメータを準備
   var params = new URLSearchParams();
@@ -816,11 +846,8 @@ function fetchAudioFromAPI(text) {
     return response.json();
   })
   .then(function(data) {
-    // 再生ボタンを再有効化
-    if (playButton) {
-      playButton.disabled = false;
-      playButton.style.opacity = '1';
-    }
+    // ローディング表示を終了
+    hidePlayButtonLoading();
     
     if (data.success && data.audioContent) {
       // キャッシュに保存
@@ -836,11 +863,8 @@ function fetchAudioFromAPI(text) {
     }
   })
   .catch(function(error) {
-    // 再生ボタンを再有効化
-    if (playButton) {
-      playButton.disabled = false;
-      playButton.style.opacity = '1';
-    }
+    // ローディング表示を終了
+    hidePlayButtonLoading();
     showError('音声読み上げエラー: ' + error.toString());
   });
 }
