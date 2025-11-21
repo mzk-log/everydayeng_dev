@@ -390,6 +390,9 @@ function startLearning() {
   // 最初の問題を表示
   currentQuestionIndex = 0;
   displayQuestion();
+  
+  // 最初の問題と次の問題をプリロード
+  preloadAudioForCurrentAndNext();
 }
 
 // 学習時間カウンターを開始
@@ -483,6 +486,9 @@ function displayQuestion() {
   var nextButton = document.getElementById('nextButton');
   if (prevButton) prevButton.disabled = true;
   if (nextButton) nextButton.disabled = true;
+  
+  // 次の問題をプリロード（バックグラウンドで非同期実行）
+  preloadNextQuestions();
 }
 
 // ストップウォッチを開始
@@ -837,6 +843,93 @@ function fetchAudioFromAPI(text) {
     }
     showError('音声読み上げエラー: ' + error.toString());
   });
+}
+
+/**
+ * 現在の問題と次の問題の音声をプリロード
+ */
+function preloadAudioForCurrentAndNext() {
+  if (!TTS_WEB_APP_URL || TTS_WEB_APP_URL === 'YOUR_WEB_APP_URL_HERE') {
+    return; // WebアプリURLが設定されていない場合はスキップ
+  }
+  
+  // 現在の問題（最初の問題）をプリロード
+  if (currentQuestionIndex >= 0 && currentQuestionIndex < currentCategoryData.length) {
+    var currentItem = currentCategoryData[currentQuestionIndex];
+    if (currentItem && currentItem.answer) {
+      preloadAudio(currentItem.answer);
+    }
+  }
+  
+  // 次の問題をプリロード
+  preloadNextQuestions();
+}
+
+/**
+ * 次の問題（最大2問）の音声をプリロード
+ */
+function preloadNextQuestions() {
+  if (!TTS_WEB_APP_URL || TTS_WEB_APP_URL === 'YOUR_WEB_APP_URL_HERE') {
+    return; // WebアプリURLが設定されていない場合はスキップ
+  }
+  
+  var preloadCount = 2; // 次の2問をプリロード
+  
+  for (var i = 1; i <= preloadCount; i++) {
+    var nextIndex = currentQuestionIndex + i;
+    if (nextIndex >= 0 && nextIndex < currentCategoryData.length) {
+      var nextItem = currentCategoryData[nextIndex];
+      if (nextItem && nextItem.answer) {
+        preloadAudio(nextItem.answer);
+      }
+    }
+  }
+}
+
+/**
+ * 指定されたテキストの音声をプリロード（バックグラウンドで非同期実行）
+ */
+function preloadAudio(text) {
+  if (!text || !text.trim()) {
+    return;
+  }
+  
+  // キャッシュに既に存在する場合はスキップ
+  var cachedAudio = getCachedAudio(text);
+  if (cachedAudio) {
+    return; // 既にキャッシュされている
+  }
+  
+  // バックグラウンドで非同期にプリロード（エラーは無視）
+  setTimeout(function() {
+    var params = new URLSearchParams();
+    params.append('text', text);
+    params.append('referer', window.location.origin);
+    
+    fetch(TTS_WEB_APP_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params
+    })
+    .then(function(response) {
+      if (!response.ok) {
+        return; // エラーは無視
+      }
+      return response.json();
+    })
+    .then(function(data) {
+      if (data && data.success && data.audioContent) {
+        // キャッシュに保存（再生はしない）
+        saveAudioToCache(text, data.audioContent);
+      }
+    })
+    .catch(function(error) {
+      // プリロードのエラーは無視（ユーザーに影響を与えない）
+      // console.log('Preload error (ignored):', error);
+    });
+  }, 100); // 少し遅延させて、メイン処理を優先
 }
 
 // 前の問題に戻る
