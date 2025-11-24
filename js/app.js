@@ -10,6 +10,7 @@ var stopwatchInterval = null;
 var stopwatchElapsed = 0;
 var isStopwatchRunning = false;
 var isAnswerShown = false;
+var userEmail = null; // ユーザーのメールアドレス
 
 // 音声キャッシュ（メモリキャッシュ）
 var audioCache = {};
@@ -31,10 +32,15 @@ var API_KEY = 'AIzaSyCnXuzLY7ybqJU_gpl-y7gZPMO-o_7_TkY'; // ここにGoogle Clou
 // 注意: Google Apps ScriptをWebアプリとして公開した際のURLを設定してください
 var TTS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxnArjXdMjXLpXI36YO9JOEj6qEf2e2DDbUVfqiWdJBDB7-QwlNL3zDJS67FFmCxybMWg/exec'; // ここにGoogle Apps ScriptのWebアプリURLを設定してください
 
+// Google Apps Script WebアプリのURL（データ取得用）
+// 注意: Google Apps ScriptをWebアプリとして公開した際のURLを設定してください
+var DATA_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycby3TyeaoYFMHU6eyb78WsR-IOS8VZ9zBBw8hXAePNOwSQXu3sGhnGTmXKXOQpawhG1Tvw/exec'; // ここにGoogle Apps ScriptのWebアプリURLを設定してください
+
 // 初期化
 window.onload = function() {
-  // まずカテゴリリストを読み込む（優先度：高）
-  loadCategories();
+  // メールアドレスを確認
+  checkUserEmail();
+  
   setupEventListeners();
   
   // 画像は後から読み込む（優先度：低）
@@ -42,6 +48,54 @@ window.onload = function() {
   setBackgroundImage();
   setButtonImages();
 };
+
+// メールアドレスを確認し、必要に応じて入力画面を表示
+function checkUserEmail() {
+  // localStorageからメールアドレスを取得
+  userEmail = localStorage.getItem('userEmail');
+  
+  if (!userEmail) {
+    // メールアドレスが保存されていない場合は入力画面を表示
+    showEmailInputDialog();
+  } else {
+    // メールアドレスが保存されている場合はカテゴリリストを読み込む
+    loadCategories();
+  }
+}
+
+// メールアドレス入力ダイアログを表示
+function showEmailInputDialog() {
+  var email = prompt('メールアドレスを入力してください:');
+  
+  // nullの場合はキャンセルが押された
+  if (email === null) {
+    return; // 何もせずに終了
+  }
+  
+  if (email && email.trim() !== '') {
+    userEmail = email.trim();
+    // localStorageに保存
+    localStorage.setItem('userEmail', userEmail);
+    
+    // ログイン成功時はエラーメッセージを自動削除
+    clearErrorMessages();
+    
+    // カテゴリリストを読み込む
+    loadCategories();
+  } else {
+    // メールアドレスが入力されなかった場合は再度表示
+    alert('メールアドレスは必須です。');
+    showEmailInputDialog();
+  }
+}
+
+// メールアドレスをリセット（開発・テスト用）
+// ブラウザのコンソールで resetUserEmail() を実行すると、メールアドレス入力画面が再表示されます
+function resetUserEmail() {
+  localStorage.removeItem('userEmail');
+  userEmail = null;
+  checkUserEmail();
+}
 
 // ボタン画像を設定する関数（最適化版）
 function setButtonImages() {
@@ -86,18 +140,42 @@ function setBackgroundImage() {
 
 // カテゴリ一覧を読み込む（最優先）
 function loadCategories() {
+  // userEmailが設定されていない場合は、再度確認
+  if (!userEmail) {
+    userEmail = localStorage.getItem('userEmail');
+  }
+  
+  if (!userEmail) {
+    showError('メールアドレスが設定されていません。');
+    checkUserEmail();
+    return;
+  }
+  
   // ローディング表示
   var select = document.getElementById('categorySelect');
+  var loadingSpinner = document.getElementById('categoryLoadingSpinner');
   if (select) {
     select.innerHTML = '<option value="">読み込み中...</option>';
     select.disabled = true;
   }
+  if (loadingSpinner) {
+    loadingSpinner.style.display = 'block';
+  }
   
-  // Google Sheets API v4でデータを取得
-  // B列（Category_No）とC列（Category）を取得
-  var url = 'https://sheets.googleapis.com/v4/spreadsheets/' + SPREADSHEET_ID + '/values/Data!B2:C?key=' + API_KEY;
+  // Google Apps Script経由でデータを取得
+  var params = new URLSearchParams();
+  params.append('action', 'getCategories');
+  params.append('email', userEmail);
+  params.append('referer', window.location.origin);
   
-  fetch(url)
+  // GETリクエストで送信
+  var requestUrl = DATA_WEB_APP_URL + '?' + params.toString();
+  
+  console.log('Request URL:', requestUrl);
+  console.log('User Email:', userEmail);
+  console.log('Params:', params.toString());
+  
+  fetch(requestUrl)
     .then(function(response) {
       if (!response.ok) {
         throw new Error('ネットワークエラー: ' + response.status);
@@ -106,44 +184,15 @@ function loadCategories() {
     })
     .then(function(data) {
       try {
-        if (!data.values || data.values.length === 0) {
-          throw new Error('データがありません');
+        if (!data.success) {
+          throw new Error(data.error || 'データの取得に失敗しました');
         }
         
-        // カテゴリを重複排除
-        var categoryMap = {};
-        var categoriesList = [];
-        
-        for (var i = 0; i < data.values.length; i++) {
-          var row = data.values[i];
-          if (!row || row.length < 2) continue;
-          
-          var categoryNo = row[0]; // B列: Category_No
-          var category = row[1];   // C列: Category
-          
-          // 空の場合はスキップ
-          if (!categoryNo || !category) continue;
-          
-          // 数値の場合は文字列に変換
-          if (typeof categoryNo === 'number') {
-            categoryNo = String(categoryNo);
-          }
-          
-          // 重複チェック
-          if (!categoryMap[categoryNo]) {
-            categoryMap[categoryNo] = true;
-            categoriesList.push({
-              no: categoryNo,
-              name: category
-            });
-          }
-        }
-        
-        if (categoriesList.length === 0) {
+        if (!data.categories || data.categories.length === 0) {
           throw new Error('カテゴリが見つかりません');
         }
         
-        categories = categoriesList;
+        categories = data.categories;
         if (select) {
           select.innerHTML = '<option value="">Categoryを選択してください</option>';
           categories.forEach(function(cat) {
@@ -154,10 +203,16 @@ function loadCategories() {
           });
           select.disabled = false;
         }
+        if (loadingSpinner) {
+          loadingSpinner.style.display = 'none';
+        }
       } catch (e) {
         showError('データ読み込みエラー: ' + e.toString());
         if (select) {
           select.disabled = false;
+        }
+        if (loadingSpinner) {
+          loadingSpinner.style.display = 'none';
         }
       }
     })
@@ -165,6 +220,9 @@ function loadCategories() {
       showError('アクセスエラー: ' + error.toString());
       if (select) {
         select.disabled = false;
+      }
+      if (loadingSpinner) {
+        loadingSpinner.style.display = 'none';
       }
     });
 }
@@ -209,6 +267,10 @@ function setupEventListeners() {
     goToHome();
   });
   
+  document.getElementById('loginButton').addEventListener('click', function() {
+    showEmailInputDialog();
+  });
+  
   // モーダル閉じるボタン
   document.getElementById('modalCloseButton').addEventListener('click', function() {
     closeModal();
@@ -231,11 +293,38 @@ function setupEventListeners() {
 
 // カテゴリデータを読み込む
 function loadCategoryData(categoryNo) {
-  // Google Sheets API v4でデータを取得
-  // A列（ID）からI列（note）まで取得
-  var url = 'https://sheets.googleapis.com/v4/spreadsheets/' + SPREADSHEET_ID + '/values/Data!A2:I?key=' + API_KEY;
+  // userEmailが設定されていない場合は、再度確認
+  if (!userEmail) {
+    userEmail = localStorage.getItem('userEmail');
+  }
   
-  fetch(url)
+  if (!userEmail) {
+    showError('メールアドレスが設定されていません。');
+    checkUserEmail();
+    return;
+  }
+  
+  // ローディング表示
+  var loadingSpinner = document.getElementById('categoryLoadingSpinner');
+  if (loadingSpinner) {
+    loadingSpinner.style.display = 'block';
+  }
+  
+  // Google Apps Script経由でデータを取得
+  var params = new URLSearchParams();
+  params.append('action', 'getCategoryData');
+  params.append('categoryNo', categoryNo);
+  params.append('email', userEmail);
+  params.append('referer', window.location.origin);
+  
+  // GETリクエストで送信
+  var requestUrl = DATA_WEB_APP_URL + '?' + params.toString();
+  
+  console.log('Request URL:', requestUrl);
+  console.log('User Email:', userEmail);
+  console.log('Params:', params.toString());
+  
+  fetch(requestUrl)
     .then(function(response) {
       if (!response.ok) {
         throw new Error('ネットワークエラー: ' + response.status);
@@ -244,51 +333,36 @@ function loadCategoryData(categoryNo) {
     })
     .then(function(data) {
       try {
-        if (!data.values || data.values.length === 0) {
+        if (!data.success) {
+          throw new Error(data.error || 'データの取得に失敗しました');
+        }
+        
+        if (!data.items) {
           throw new Error('データがありません');
         }
         
-        // カテゴリ番号を文字列に統一
-        if (typeof categoryNo === 'number') {
-          categoryNo = String(categoryNo);
-        }
-        
-        var items = [];
-        
-        for (var i = 0; i < data.values.length; i++) {
-          var row = data.values[i];
-          if (!row || row.length < 2) continue;
-          
-          var rowCategoryNo = row[1]; // B列: Category_No
-          
-          // 数値の場合は文字列に変換
-          if (typeof rowCategoryNo === 'number') {
-            rowCategoryNo = String(rowCategoryNo);
-          }
-          
-          // カテゴリ番号が一致する行のみ取得
-          if (rowCategoryNo == categoryNo) {
-            items.push({
-              id: row[0] || '',           // A列: ID
-              no: row[3] || '',           // D列: No
-              q_title: row[4] || '',      // E列: Q_Title
-              question: row[5] || '',     // F列: Question
-              a_title: row[6] || '',      // G列: A_Title
-              answer: row[7] || '',       // H列: Answer
-              note: row[8] || ''          // I列: note
-            });
-          }
-        }
-        
-        currentCategoryData = items;
+        currentCategoryData = data.items;
         currentCategoryNo = categoryNo;
         displayList();
+        
+        // ローディング非表示
+        if (loadingSpinner) {
+          loadingSpinner.style.display = 'none';
+        }
       } catch (e) {
         showError('データ読み込みエラー: ' + e.toString());
+        // ローディング非表示
+        if (loadingSpinner) {
+          loadingSpinner.style.display = 'none';
+        }
       }
     })
     .catch(function(error) {
       showError('アクセスエラー: ' + error.toString());
+      // ローディング非表示
+      if (loadingSpinner) {
+        loadingSpinner.style.display = 'none';
+      }
     });
 }
 
@@ -347,16 +421,77 @@ function resetListDisplay() {
 }
 
 // エラーを表示
+// エラーメッセージの配列（複数エラーを管理）
+var errorMessages = [];
+
 function showError(message) {
+  // 既存のエラーメッセージコンテナを取得または作成
+  var container = document.querySelector('.container');
+  if (!container) return;
+  
+  var errorContainer = document.getElementById('errorContainer');
+  if (!errorContainer) {
+    errorContainer = document.createElement('div');
+    errorContainer.id = 'errorContainer';
+    container.insertBefore(errorContainer, container.firstChild);
+  }
+  
+  // エラーメッセージを配列に追加
+  errorMessages.push(message);
+  
+  // エラーメッセージを再描画
+  renderErrorMessages();
+}
+
+// エラーメッセージを描画
+function renderErrorMessages() {
+  var errorContainer = document.getElementById('errorContainer');
+  if (!errorContainer) return;
+  
+  // 既存のエラーメッセージを削除
+  errorContainer.innerHTML = '';
+  
+  if (errorMessages.length === 0) {
+    errorContainer.remove();
+    return;
+  }
+  
+  // エラーメッセージのdiv要素を作成
   var errorDiv = document.createElement('div');
   errorDiv.className = 'error-message';
-  errorDiv.textContent = message;
-  var container = document.querySelector('.container');
-  if (container) {
-    container.insertBefore(errorDiv, container.firstChild);
-    setTimeout(function() {
-      errorDiv.remove();
-    }, 3000);
+  
+  // 複数エラーの場合は箇条書きで表示
+  if (errorMessages.length === 1) {
+    errorDiv.textContent = errorMessages[0];
+  } else {
+    var ul = document.createElement('ul');
+    errorMessages.forEach(function(msg) {
+      var li = document.createElement('li');
+      li.textContent = msg;
+      ul.appendChild(li);
+    });
+    errorDiv.appendChild(ul);
+  }
+  
+  // 閉じるボタンを追加
+  var closeButton = document.createElement('button');
+  closeButton.className = 'error-close-button';
+  closeButton.textContent = '×';
+  closeButton.type = 'button';
+  closeButton.addEventListener('click', function() {
+    clearErrorMessages();
+  });
+  errorDiv.appendChild(closeButton);
+  
+  errorContainer.appendChild(errorDiv);
+}
+
+// エラーメッセージをクリア
+function clearErrorMessages() {
+  errorMessages = [];
+  var errorContainer = document.getElementById('errorContainer');
+  if (errorContainer) {
+    errorContainer.remove();
   }
 }
 

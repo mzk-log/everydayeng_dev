@@ -8,6 +8,7 @@
 </head>
 <body>
   <div class="background-image" id="backgroundImage"></div>
+  <button id="loginButton" class="login-button" type="button">ログイン</button>
   <div class="container">
     <!-- 初期画面 -->
     <div id="screen1" class="screen active">
@@ -18,9 +19,12 @@
         
         <div class="section">
           <div class="section-label">Category</div>
-          <select id="categorySelect">
-            <option value="">Categoryを選択してください</option>
-          </select>
+          <div class="select-container">
+            <select id="categorySelect">
+              <option value="">Categoryを選択してください</option>
+            </select>
+            <div id="categoryLoadingSpinner" class="category-loading-spinner" style="display: none;"></div>
+          </div>
         </div>
         
         <div class="section">
