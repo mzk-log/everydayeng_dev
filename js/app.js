@@ -733,19 +733,22 @@ function playAnswer() {
  * メモリキャッシュ → localStorage の順で確認
  */
 function getCachedAudio(text) {
+  // テキストを正規化（キャッシュキーは正規化後のテキストで生成）
+  var normalizedText = normalizeTextForTTS(text);
+  
   // メモリキャッシュを確認
-  if (audioCache[text]) {
-    return audioCache[text];
+  if (audioCache[normalizedText]) {
+    return audioCache[normalizedText];
   }
   
   // localStorageを確認
   try {
-    var cacheKey = CACHE_PREFIX + hashText(text);
+    var cacheKey = CACHE_PREFIX + hashText(normalizedText);
     var cachedData = localStorage.getItem(cacheKey);
     if (cachedData) {
       var audioData = JSON.parse(cachedData);
       // メモリキャッシュにも保存
-      audioCache[text] = audioData;
+      audioCache[normalizedText] = audioData;
       return audioData;
     }
   } catch (e) {
@@ -760,17 +763,21 @@ function getCachedAudio(text) {
  * 音声データをキャッシュに保存
  */
 function saveAudioToCache(text, audioContent) {
+  // テキストを正規化（キャッシュキーは正規化後のテキストで生成）
+  var normalizedText = normalizeTextForTTS(text);
+  
   var audioData = {
     audioContent: audioContent,
-    timestamp: Date.now()
+    timestamp: Date.now(),
+    textHash: hashText(normalizedText)  // メモリキャッシュ削除時の照合用
   };
   
   // メモリキャッシュに保存
-  audioCache[text] = audioData;
+  audioCache[normalizedText] = audioData;
   
   // localStorageに保存（サイズ制限を考慮）
   try {
-    var cacheKey = CACHE_PREFIX + hashText(text);
+    var cacheKey = CACHE_PREFIX + hashText(normalizedText);
     var dataToStore = JSON.stringify(audioData);
     
     // キャッシュサイズをチェック
@@ -792,6 +799,31 @@ function saveAudioToCache(text, audioContent) {
       console.warn('Cache save retry failed:', e2);
     }
   }
+}
+
+/**
+ * TTS用にテキストを正規化
+ * - 前後の空白を削除
+ * - 特殊な空白文字を通常のスペースに変換
+ * - 連続する空白を1つに正規化
+ */
+function normalizeTextForTTS(text) {
+  if (!text || typeof text !== 'string') {
+    return '';
+  }
+  
+  // 1. 前後の空白を削除
+  var normalized = text.trim();
+  
+  // 2. 特殊な空白文字を通常のスペース（U+0020）に変換
+  // 全角スペース（U+3000）、タブ（U+0009）、改行（U+000A, U+000D）、
+  // ノンブレーキングスペース（U+00A0）などを通常のスペースに変換
+  normalized = normalized.replace(/[\u3000\u0009\u000A\u000D\u00A0\u2000-\u200B\u2028\u2029]/g, ' ');
+  
+  // 3. 連続する空白を1つに正規化（2文字以上の空白を1文字に）
+  normalized = normalized.replace(/\s+/g, ' ');
+  
+  return normalized;
 }
 
 /**
@@ -860,11 +892,45 @@ function clearOldCacheEntries() {
     // 古いエントリの50%を削除
     var deleteCount = Math.floor(entries.length / 2);
     for (var j = 0; j < deleteCount; j++) {
-      localStorage.removeItem(entries[j].key);
+      var entryKey = entries[j].key;
+      var entryValue = localStorage.getItem(entryKey);
+      
+      // localStorageから削除
+      localStorage.removeItem(entryKey);
+      
       // メモリキャッシュからも削除（該当するものがあれば）
-      for (var text in audioCache) {
-        if (hashText(text) === entries[j].key.replace(CACHE_PREFIX, '')) {
-          delete audioCache[text];
+      if (entryValue) {
+        try {
+          var entryData = JSON.parse(entryValue);
+          var storedHash = entryData.textHash;
+          
+          if (storedHash) {
+            // textHashが保存されている場合（新形式）：ハッシュ値で直接照合
+            for (var text in audioCache) {
+              if (hashText(text) === storedHash) {
+                delete audioCache[text];
+                break; // 一致したらループを抜ける（効率化）
+              }
+            }
+          } else {
+            // textHashが保存されていない場合（旧形式）：従来の方法で照合
+            var hashFromKey = entryKey.replace(CACHE_PREFIX, '');
+            for (var text in audioCache) {
+              if (hashText(text) === hashFromKey) {
+                delete audioCache[text];
+                break; // 一致したらループを抜ける（効率化）
+              }
+            }
+          }
+        } catch (e) {
+          // パースエラーは無視（従来の方法でフォールバック）
+          var hashFromKey = entryKey.replace(CACHE_PREFIX, '');
+          for (var text in audioCache) {
+            if (hashText(text) === hashFromKey) {
+              delete audioCache[text];
+              break;
+            }
+          }
         }
       }
     }
@@ -930,11 +996,10 @@ function fetchAudioFromAPI(text) {
   // ローディング表示を開始
   showPlayButtonLoading();
   
-  var playButton = document.getElementById('playButton');
-  
   // リクエストパラメータを準備
   var params = new URLSearchParams();
   params.append('text', text);
+  params.append('email', userEmail); // TTS処理にもメール認証を追加
   params.append('referer', window.location.origin);
   
   // Google Apps Scriptにリクエストを送信
@@ -1032,11 +1097,17 @@ function preloadAudio(text) {
   
   // バックグラウンドで非同期にプリロード（エラーは無視）
   setTimeout(function() {
+    // userEmailが設定されていない場合はスキップ
+    if (!userEmail) {
+      return;
+    }
+    
     var params = new URLSearchParams();
     params.append('text', text);
+    params.append('email', userEmail); // TTS処理にもメール認証を追加
     params.append('referer', window.location.origin);
     
-    fetch(TTS_WEB_APP_URL, {
+    fetch(WEB_APP_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
