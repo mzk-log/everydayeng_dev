@@ -69,10 +69,7 @@
         <div class="section answer-section" id="answerSection">
           <div class="section-label" id="answerSectionLabel"></div>
           <div class="answer-button-container" id="answerButtonContainer">
-            <button class="answer-button" id="answerButton" type="button">
-              <span class="answer-text" id="answerText">Answer</span>
-              <span class="answer-stopwatch" id="answerStopwatch">(00:00:00)</span>
-            </button>
+            <!-- 空の黒いボックスとして残す -->
           </div>
           <div class="answer-text answer-hidden" id="answerTextDisplay" style="display: none;"></div>
           <div class="answer-time-container" id="answerTimeContainer" style="display: none;">
@@ -94,6 +91,10 @@
       <div class="navigation-bar">
         <button class="nav-button arrow-left" id="prevButton" type="button" disabled>
           <img src="img/arrow.png" alt="前へ">
+        </button>
+        <button class="nav-answer-button" id="navAnswerButton" type="button">
+          <div class="nav-answer-text blinking" id="navAnswerText">Ans</div>
+          <div class="nav-answer-stopwatch" id="navAnswerStopwatch">00:00:00</div>
         </button>
         <button class="nav-button" id="nextButton" type="button">
           <img src="img/arrow.png" alt="次へ">

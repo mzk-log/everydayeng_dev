@@ -173,7 +173,12 @@ function loadCategories() {
           categories.forEach(function(cat) {
             var option = document.createElement('option');
             option.value = cat.no;
-            option.textContent = cat.no + '-' + cat.name;
+            // 設問数を表示（countが存在する場合のみ）
+            var displayText = cat.no + '-' + cat.name;
+            if (cat.count !== undefined && cat.count !== null) {
+              displayText += '（' + cat.count + '問）';
+            }
+            option.textContent = displayText;
             select.appendChild(option);
           });
           select.disabled = false;
@@ -222,7 +227,8 @@ function setupEventListeners() {
     startLearning();
   });
   
-  document.getElementById('answerButton').addEventListener('click', function() {
+  // 旧Answerボタン（削除済み）の代わりに、ナビゲーションバーのAnswerボタンを使用
+  document.getElementById('navAnswerButton').addEventListener('click', function() {
     showAnswer();
   });
   
@@ -568,11 +574,15 @@ function displayQuestion() {
     questionText.textContent = item.question || '';
   }
   
-  // Answerボタンを表示
+  // 上の黒いボックスを表示
   var answerButtonContainer = document.getElementById('answerButtonContainer');
-  var answerText = document.getElementById('answerText');
   if (answerButtonContainer) answerButtonContainer.style.display = 'block';
-  if (answerText) answerText.classList.add('blinking');
+  
+  // ナビゲーションバーのAnswerボタンを有効化
+  var navAnswerButton = document.getElementById('navAnswerButton');
+  var navAnswerText = document.getElementById('navAnswerText');
+  if (navAnswerButton) navAnswerButton.disabled = false;
+  if (navAnswerText) navAnswerText.classList.add('blinking');
   
   // 回答テキスト、停止時間表示コンテナを非表示
   var answerTextDisplay = document.getElementById('answerTextDisplay');
@@ -622,9 +632,9 @@ function stopStopwatch() {
 function resetStopwatch() {
   stopStopwatch();
   stopwatchElapsed = 0;
-  var answerStopwatch = document.getElementById('answerStopwatch');
-  if (answerStopwatch) {
-    answerStopwatch.textContent = '(00:00:00)';
+  var navAnswerStopwatch = document.getElementById('navAnswerStopwatch');
+  if (navAnswerStopwatch) {
+    navAnswerStopwatch.textContent = '00:00:00';
   }
 }
 
@@ -638,12 +648,14 @@ function updateStopwatch() {
   var seconds = totalSeconds % 60;
   var milliseconds = Math.floor((elapsed % 1000) / 10);
   
-  var answerStopwatch = document.getElementById('answerStopwatch');
-  if (answerStopwatch) {
-    answerStopwatch.textContent = 
-      '(' + String(minutes).padStart(2, '0') + ':' +
-      String(seconds).padStart(2, '0') + ':' +
-      String(milliseconds).padStart(2, '0') + ')';
+  var timeText = String(minutes).padStart(2, '0') + ':' +
+                 String(seconds).padStart(2, '0') + ':' +
+                 String(milliseconds).padStart(2, '0');
+  
+  // ナビゲーションバーのAnswerボタン内のストップウォッチを更新
+  var navAnswerStopwatch = document.getElementById('navAnswerStopwatch');
+  if (navAnswerStopwatch) {
+    navAnswerStopwatch.textContent = timeText;
   }
 }
 
@@ -655,11 +667,15 @@ function showAnswer() {
   
   var item = currentCategoryData[currentQuestionIndex];
   
-  // Answerボタンを非表示
+  // 上の黒いボックスを非表示
   var answerButtonContainer = document.getElementById('answerButtonContainer');
-  var answerText = document.getElementById('answerText');
   if (answerButtonContainer) answerButtonContainer.style.display = 'none';
-  if (answerText) answerText.classList.remove('blinking');
+  
+  // ナビゲーションバーのAnswerボタンを無効化
+  var navAnswerButton = document.getElementById('navAnswerButton');
+  var navAnswerText = document.getElementById('navAnswerText');
+  if (navAnswerButton) navAnswerButton.disabled = true;
+  if (navAnswerText) navAnswerText.classList.remove('blinking');
   
   // 停止時間を計算して表示
   var elapsed = stopwatchElapsed;

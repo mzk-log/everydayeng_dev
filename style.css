@@ -460,6 +460,63 @@ tr:last-child td {
   transform: rotate(180deg);
 }
 
+/* ナビゲーションバー中央のAnswerボタン */
+.nav-answer-button {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 46px;
+  background-color: #000;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 5px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* ナビゲーションバー中央のAnswerボタン無効時 */
+.nav-answer-button:disabled {
+  background-color: #d3d3d3;
+  cursor: not-allowed;
+}
+
+/* ナビゲーションバー中央のAnswerボタン内のテキスト */
+.nav-answer-text {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 2px;
+  color: #fff;
+}
+
+/* ナビゲーションバー中央のAnswerボタン内のテキスト点滅時 */
+.nav-answer-text.blinking {
+  animation: answerBlink 2s ease-in-out infinite;
+}
+
+/* ナビゲーションバー中央のAnswerボタン無効時のテキスト */
+.nav-answer-button:disabled .nav-answer-text {
+  color: #666;
+}
+
+/* ナビゲーションバー中央のAnswerボタン内のストップウォッチ */
+.nav-answer-stopwatch {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: bold;
+  color: #fff;
+}
+
+/* ナビゲーションバー中央のAnswerボタン無効時のストップウォッチ */
+.nav-answer-button:disabled .nav-answer-stopwatch {
+  color: #666;
+}
+
 /* ログインボタン */
 .login-button {
   position: fixed;
@@ -817,6 +874,10 @@ body:has(#screen2.active) .login-button {
 /* Answerボタンのスタイル */
 .answer-button-container {
   margin: 10px 0;
+  width: 100%;
+  min-height: 50px;
+  background-color: #000;
+  border-radius: 8px;
 }
 
 .answer-button {
