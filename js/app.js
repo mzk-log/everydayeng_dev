@@ -655,6 +655,10 @@ function displayQuestion() {
   if (prevButton) prevButton.disabled = true;
   if (nextButton) nextButton.disabled = true;
   
+  // プラスボタンを無効化（出題中）
+  var plusButton = document.getElementById('plusButton');
+  if (plusButton) plusButton.disabled = true;
+  
   // 次の問題をプリロード（バックグラウンドで非同期実行）
   preloadNextQuestions();
 }
@@ -761,6 +765,10 @@ function showAnswer() {
   
   // ナビゲーションボタンを有効化
   updateNavigationButtons();
+  
+  // プラスボタンを有効化（回答表示中）
+  var plusButton = document.getElementById('plusButton');
+  if (plusButton) plusButton.disabled = false;
 }
 
 /**
