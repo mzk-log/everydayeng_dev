@@ -12,6 +12,11 @@ var isStopwatchRunning = false;
 var isAnswerShown = false;
 var userEmail = null; // ユーザーのメールアドレス
 var modalCurrentIndex = 0; // モーダル内の現在のインデックス
+var retryQuestionIndices = []; // 再チャレンジする問題のインデックスを保存
+var isInRetryMode = false; // 再チャレンジモードかどうか
+var retryQuestionIndex = 0; // 現在の再チャレンジ問題のインデックス
+var completedQuestionIndices = []; // 完了した問題のインデックスを保存（灰色表示）
+var isLearningCompleted = false; // 学習が完了したかどうか
 
 // 音声キャッシュ（メモリキャッシュ）
 var audioCache = {};
@@ -247,6 +252,10 @@ function setupEventListeners() {
   
   document.getElementById('homeButton').addEventListener('click', function() {
     goToHome();
+  });
+  
+  document.getElementById('plusButton').addEventListener('click', function() {
+    handlePlusButtonClick();
   });
   
   document.getElementById('loginButton').addEventListener('click', function() {
@@ -549,6 +558,14 @@ function startLearning() {
   
   // 最初の問題を表示
   currentQuestionIndex = 0;
+  
+  // 再チャレンジ関連変数をリセット
+  retryQuestionIndices = [];
+  isInRetryMode = false;
+  retryQuestionIndex = 0;
+  completedQuestionIndices = [];
+  isLearningCompleted = false;
+  
   displayQuestion();
   
   // 最初の問題と次の問題をプリロード
@@ -611,10 +628,7 @@ function displayQuestion() {
   }
   
   // 出題数表示
-  var questionInfo = document.getElementById('questionInfo');
-  if (questionInfo) {
-    questionInfo.textContent = '[' + (currentQuestionIndex + 1) + '/' + currentCategoryData.length + ']';
-  }
+  updateQuestionInfoDisplay();
   
   // 質問文を表示（画像対応）
   var questionText = document.getElementById('questionText');
@@ -766,9 +780,8 @@ function showAnswer() {
   // ナビゲーションボタンを有効化
   updateNavigationButtons();
   
-  // プラスボタンを有効化（回答表示中）
-  var plusButton = document.getElementById('plusButton');
-  if (plusButton) plusButton.disabled = false;
+  // プラスボタンを有効化（回答表示中、学習完了でない場合）
+  updatePlusButton();
 }
 
 /**
@@ -1322,17 +1335,187 @@ function preloadAudio(text) {
 
 // 前の問題に戻る
 function goToPreviousQuestion() {
-  if (currentQuestionIndex > 0) {
-    currentQuestionIndex--;
-    displayQuestion();
+  if (isInRetryMode) {
+    // 再チャレンジモードの場合
+    if (retryQuestionIndex > 0) {
+      retryQuestionIndex--;
+      currentQuestionIndex = retryQuestionIndices[retryQuestionIndex];
+      displayQuestion();
+      updateNavigationButtons();
+    }
+  } else {
+    // 通常モード
+    if (currentQuestionIndex > 0) {
+      currentQuestionIndex--;
+      displayQuestion();
+      updateNavigationButtons();
+    }
   }
 }
 
 // 次の問題に進む
 function goToNextQuestion() {
-  if (currentQuestionIndex < currentCategoryData.length - 1) {
-    currentQuestionIndex++;
+  // 現在の問題を完了リストに追加（重複チェック）
+  if (completedQuestionIndices.indexOf(currentQuestionIndex) === -1) {
+    completedQuestionIndices.push(currentQuestionIndex);
+  }
+  
+  if (isInRetryMode) {
+    // 再チャレンジモードの場合、その問題をリストから削除
+    var indexInRetry = retryQuestionIndices.indexOf(currentQuestionIndex);
+    if (indexInRetry !== -1) {
+      retryQuestionIndices.splice(indexInRetry, 1);
+      // 削除後、現在のインデックスを調整
+      if (retryQuestionIndex > indexInRetry) {
+        retryQuestionIndex--;
+      }
+    }
+    // 次の再チャレンジ問題があるか確認
+    if (retryQuestionIndices.length > 0) {
+      // 次の再チャレンジ問題に進む
+      if (retryQuestionIndex < retryQuestionIndices.length) {
+        currentQuestionIndex = retryQuestionIndices[retryQuestionIndex];
+        displayQuestion();
+      } else {
+        // 再チャレンジ問題が全て終わった場合
+        isInRetryMode = false;
+        retryQuestionIndex = 0;
+        isLearningCompleted = true;
+        // 出題数表示を更新（完了済みとして表示）
+        updateQuestionInfoDisplay();
+      }
+    } else {
+      // 再チャレンジ問題が全て終わった場合
+      isInRetryMode = false;
+      retryQuestionIndex = 0;
+      isLearningCompleted = true;
+      // 出題数表示を更新（完了済みとして表示）
+      updateQuestionInfoDisplay();
+    }
+  } else {
+    // 通常モード
+    if (currentQuestionIndex < currentCategoryData.length - 1) {
+      currentQuestionIndex++;
+      displayQuestion();
+    } else {
+      // 最後の問題の場合
+      if (retryQuestionIndices.length > 0) {
+        // 再チャレンジ問題があれば表示
+        startRetryQuestions();
+      } else {
+        // 再チャレンジ問題がなければ学習完了
+        isLearningCompleted = true;
+        // 出題数表示を更新（完了済みとして表示）
+        updateQuestionInfoDisplay();
+      }
+    }
+  }
+  updateNavigationButtons();
+  updatePlusButton();
+}
+
+// プラスボタンクリック処理
+function handlePlusButtonClick() {
+  if (isAnswerShown) {
+    if (isInRetryMode) {
+      // 再チャレンジモードの場合
+      // 現在の問題を再チャレンジリストに追加（重複チェック）
+      if (retryQuestionIndices.indexOf(currentQuestionIndex) === -1) {
+        retryQuestionIndices.push(currentQuestionIndex);
+      }
+      
+      // 完了リストから削除（プラスボタンを押したら黒色通常に戻す）
+      var completedIndex = completedQuestionIndices.indexOf(currentQuestionIndex);
+      if (completedIndex !== -1) {
+        completedQuestionIndices.splice(completedIndex, 1);
+      }
+      
+      // 出題数表示を更新
+      updateQuestionInfoDisplay();
+      
+      // 現在の問題を再度表示
+      displayQuestion();
+      updateNavigationButtons();
+    } else {
+      // 通常モードの場合
+      // 現在の問題を再チャレンジリストに追加（重複チェック）
+      if (retryQuestionIndices.indexOf(currentQuestionIndex) === -1) {
+        retryQuestionIndices.push(currentQuestionIndex);
+      }
+      
+      // 完了リストから削除（プラスボタンを押したら黒色通常に戻す）
+      var completedIndex = completedQuestionIndices.indexOf(currentQuestionIndex);
+      if (completedIndex !== -1) {
+        completedQuestionIndices.splice(completedIndex, 1);
+      }
+      
+      // 出題数表示を更新
+      updateQuestionInfoDisplay();
+      
+      // 次の問題に進む
+      if (currentQuestionIndex < currentCategoryData.length - 1) {
+        // 最後の問題でない場合、次の問題に進む
+        currentQuestionIndex++;
+        displayQuestion();
+        updateNavigationButtons();
+      } else {
+        // 最後の問題の場合、最初に戻って再チャレンジ問題を出題
+        startRetryQuestions();
+      }
+    }
+  }
+}
+
+// 出題数表示を更新する関数
+function updateQuestionInfoDisplay() {
+  var questionInfo = document.getElementById('questionInfo');
+  if (!questionInfo) return;
+  
+  var totalQuestions = currentCategoryData.length;
+  var displayItems = [];
+  
+  for (var i = 0; i < totalQuestions; i++) {
+    var questionNum = i + 1;
+    var isCurrent = (i === currentQuestionIndex);
+    var isCompleted = (completedQuestionIndices.indexOf(i) !== -1);
+    var isRetry = (retryQuestionIndices.indexOf(i) !== -1);
+    
+    if (isCompleted) {
+      // 完了済み（＞ボタンを押した）：灰色通常（最優先）
+      displayItems.push('<span style="color: #999;">' + questionNum + '</span>');
+    } else if (isCurrent && isRetry) {
+      // 再チャレンジ問題を出題中：赤色太字
+      displayItems.push('<strong style="color: #f00;">' + questionNum + '</strong>');
+    } else if (isCurrent) {
+      // 現在出題中：黒色太字
+      displayItems.push('<strong style="color: #000;">' + questionNum + '</strong>');
+    } else if (isRetry) {
+      // 再チャレンジ対象（プラスボタンを押した）：赤色通常
+      displayItems.push('<span style="color: #f00;">' + questionNum + '</span>');
+    } else {
+      // 未出題：黒色通常
+      displayItems.push('<span style="color: #000;">' + questionNum + '</span>');
+    }
+  }
+  
+  questionInfo.innerHTML = displayItems.join(',');
+}
+
+// 再チャレンジ問題開始関数
+function startRetryQuestions() {
+  if (retryQuestionIndices.length > 0) {
+    isInRetryMode = true;
+    isLearningCompleted = false; // 再チャレンジ開始時は学習完了フラグをリセット
+    retryQuestionIndex = 0;
+    currentQuestionIndex = retryQuestionIndices[0];
     displayQuestion();
+    updateNavigationButtons();
+    updatePlusButton();
+  } else {
+    // 再チャレンジ問題がない場合は学習完了
+    isLearningCompleted = true;
+    updateNavigationButtons();
+    updatePlusButton();
   }
 }
 
@@ -1340,8 +1523,48 @@ function goToNextQuestion() {
 function updateNavigationButtons() {
   var prevButton = document.getElementById('prevButton');
   var nextButton = document.getElementById('nextButton');
-  if (prevButton) prevButton.disabled = (currentQuestionIndex === 0);
-  if (nextButton) nextButton.disabled = (currentQuestionIndex === currentCategoryData.length - 1);
+  
+  // 回答表示中（isAnswerShown === true）の場合は、isLearningCompletedに関係なくボタンを有効化
+  if (isAnswerShown && !isLearningCompleted) {
+    if (isInRetryMode) {
+      // 再チャレンジモードの場合
+      if (prevButton) prevButton.disabled = (retryQuestionIndex === 0);
+      // 最後の再チャレンジ問題でも、回答表示中は次へボタンを有効にする
+      if (nextButton) nextButton.disabled = false;
+    } else {
+      // 通常モード
+      if (prevButton) prevButton.disabled = (currentQuestionIndex === 0);
+      if (nextButton) {
+        if (currentQuestionIndex === currentCategoryData.length - 1) {
+          // 最後の問題の場合、回答表示中は常に有効（再チャレンジ問題の有無に関係なく）
+          nextButton.disabled = false;
+        } else {
+          nextButton.disabled = false;
+        }
+      }
+    }
+  } else if (isLearningCompleted) {
+    // 学習完了の場合、次へボタンを無効化
+    if (nextButton) nextButton.disabled = true;
+    if (prevButton) prevButton.disabled = (currentQuestionIndex === 0);
+  } else if (isInRetryMode) {
+    // 再チャレンジモードの場合（回答表示前）
+    if (prevButton) prevButton.disabled = true;
+    if (nextButton) nextButton.disabled = true;
+  } else {
+    // 通常モード（回答表示前）
+    if (prevButton) prevButton.disabled = true;
+    if (nextButton) nextButton.disabled = true;
+  }
+}
+
+// プラスボタンの状態を更新
+function updatePlusButton() {
+  var plusButton = document.getElementById('plusButton');
+  if (plusButton) {
+    // 回答表示中で学習完了でない場合は有効、それ以外は無効
+    plusButton.disabled = !isAnswerShown || isLearningCompleted;
+  }
 }
 
 // ホームに戻る
