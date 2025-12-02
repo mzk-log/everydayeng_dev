@@ -899,6 +899,10 @@ body:has(#screen2.active) .login-button {
 #screen2 .question-info {
   font-size: 16px;
   margin: 3px 0;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.5;
 }
 
 /* 学習画面の質問テキスト */
