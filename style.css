@@ -234,9 +234,23 @@ th {
 
 /* No列ヘッダーのレイアウト */
 #listTable thead th:first-child {
-  display: flex;
-  align-items: center;
-  gap: 30px;
+  /* display: table-cell のまま（position: sticky を維持） */
+}
+
+/* No列ヘッダー内のspanとbuttonを横並びに */
+#listTable thead th:first-child span {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+#listTable thead th:first-child .clear-button {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+/* No列ヘッダー内のspanとbuttonの間隔 */
+#listTable thead th:first-child span {
+  margin-right: 30px;
 }
 
 /* クリアボタン */
