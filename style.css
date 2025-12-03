@@ -68,7 +68,7 @@ body {
 
 /* セクション */
 .section {
-  margin: 15px 0;
+  margin: 10px 0;
 }
 
 /* 初期画面のListセクション */
@@ -115,6 +115,61 @@ body {
   font-size: 16px;
   color: #666;
   margin-left: 5px;
+}
+
+/* Listナビゲーションボタンコンテナ（外側） */
+.list-nav-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0px 0;
+  width: 100%;
+  visibility: hidden;
+}
+
+/* Listナビゲーションボタンコンテナ（内側） */
+.list-nav-buttons {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Listナビゲーションボタン */
+.list-nav-button {
+  width: 14px;
+  height: 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.list-nav-button img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.list-nav-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Listナビゲーションボタンの有効/無効時の色 */
+.list-nav-button:not(:disabled) img {
+  filter: brightness(0);
+}
+
+.list-nav-button:disabled img {
+  filter: brightness(0) opacity(0.3);
+}
+
+/* List前へボタンの画像（180度回転） */
+.list-nav-button.arrow-left img {
+  transform: rotate(180deg);
 }
 
 /* セレクトボックスコンテナ */
@@ -218,7 +273,7 @@ table {
 /* テーブルヘッダーとセル */
 th,
 td {
-  padding: 10px;
+  padding: 4px 10px;
   text-align: left;
   border-bottom: 1px solid #ddd;
 }

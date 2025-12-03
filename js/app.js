@@ -20,6 +20,7 @@ var isLearningCompleted = false; // 学習が完了したかどうか
 var selectedQuestionIndices = []; // 選択された問題のインデックスを保存
 var originalCategoryData = []; // 元の全問題データ（出題数表示用）
 var isToggleActive = true; // トグルボタンの状態（ON/OFF）
+var currentAudio = null; // 現在再生中のAudioオブジェクト
 
 // 音声キャッシュ（メモリキャッシュ）
 var audioCache = {};
@@ -213,6 +214,8 @@ function loadCategories() {
         if (loadingSpinner) {
           loadingSpinner.style.display = 'none';
         }
+        // ボタンの状態を更新
+        updateListNavButtons();
       } catch (e) {
         showError('データ読み込みエラー: ' + e.toString());
         if (select) {
@@ -248,6 +251,8 @@ function setupEventListeners() {
     } else {
       resetListDisplay();
     }
+    // ボタンの状態を更新
+    updateListNavButtons();
   });
   
   document.getElementById('startButton').addEventListener('click', function() {
@@ -346,6 +351,16 @@ function setupEventListeners() {
   document.getElementById('clearSelectionButton').addEventListener('click', function() {
     clearSelection();
   });
+  
+  // Listナビゲーションボタン（前へ）
+  document.getElementById('listPrevButton').addEventListener('click', function() {
+    navigateToPreviousCategory();
+  });
+  
+  // Listナビゲーションボタン（次へ）
+  document.getElementById('listNextButton').addEventListener('click', function() {
+    navigateToNextCategory();
+  });
 }
 
 // カテゴリデータを読み込む
@@ -399,6 +414,8 @@ function loadCategoryData(categoryNo) {
         // 選択状態をリセット
         selectedQuestionIndices = [];
         displayList();
+        // ボタンの状態を更新（表示/非表示と有効/無効を設定）
+        updateListNavButtons();
         
         // ローディング非表示
         if (loadingSpinner) {
@@ -536,6 +553,118 @@ function toggleQuestionSelection(index, row) {
   updateSelectionCount();
 }
 
+// Listナビゲーションボタンを表示
+function showListNavButtons() {
+  var listNavContainer = document.querySelector('.list-nav-container');
+  if (listNavContainer) {
+    listNavContainer.style.visibility = 'visible';
+  }
+}
+
+// Listナビゲーションボタンを非表示
+function hideListNavButtons() {
+  var listNavContainer = document.querySelector('.list-nav-container');
+  if (listNavContainer) {
+    listNavContainer.style.visibility = 'hidden';
+  }
+}
+
+// 前のカテゴリに移動
+function navigateToPreviousCategory() {
+  var select = document.getElementById('categorySelect');
+  if (!select || !select.value || categories.length === 0) {
+    return;
+  }
+  
+  // 現在選択されているカテゴリのインデックスを取得
+  var currentIndex = -1;
+  for (var i = 0; i < categories.length; i++) {
+    if (categories[i].no == select.value) {
+      currentIndex = i;
+      break;
+    }
+  }
+  
+  // 前のカテゴリが存在する場合
+  if (currentIndex > 0) {
+    var previousCategory = categories[currentIndex - 1];
+    select.value = previousCategory.no;
+    // changeイベントを手動で発火
+    var event = new Event('change', { bubbles: true });
+    select.dispatchEvent(event);
+  }
+}
+
+// 次のカテゴリに移動
+function navigateToNextCategory() {
+  var select = document.getElementById('categorySelect');
+  if (!select || !select.value || categories.length === 0) {
+    return;
+  }
+  
+  // 現在選択されているカテゴリのインデックスを取得
+  var currentIndex = -1;
+  for (var i = 0; i < categories.length; i++) {
+    if (categories[i].no == select.value) {
+      currentIndex = i;
+      break;
+    }
+  }
+  
+  // 次のカテゴリが存在する場合
+  if (currentIndex >= 0 && currentIndex < categories.length - 1) {
+    var nextCategory = categories[currentIndex + 1];
+    select.value = nextCategory.no;
+    // changeイベントを手動で発火
+    var event = new Event('change', { bubbles: true });
+    select.dispatchEvent(event);
+  }
+}
+
+// Listナビゲーションボタンの状態を更新
+function updateListNavButtons() {
+  var prevButton = document.getElementById('listPrevButton');
+  var nextButton = document.getElementById('listNextButton');
+  var select = document.getElementById('categorySelect');
+  
+  if (!prevButton || !nextButton || !select || categories.length === 0) {
+    // カテゴリが読み込まれていない場合は非表示
+    hideListNavButtons();
+    return;
+  }
+  
+  // カテゴリが選択されていない場合
+  if (!select.value) {
+    // 非表示にする
+    hideListNavButtons();
+    return;
+  }
+  
+  // カテゴリが選択されている場合は表示
+  showListNavButtons();
+  
+  // 現在選択されているカテゴリのインデックスを取得
+  var currentIndex = -1;
+  for (var i = 0; i < categories.length; i++) {
+    if (categories[i].no == select.value) {
+      currentIndex = i;
+      break;
+    }
+  }
+  
+  // ボタンの有効/無効を設定
+  if (currentIndex === -1) {
+    // カテゴリが見つからない場合
+    prevButton.disabled = true;
+    nextButton.disabled = true;
+  } else {
+    // 最初のカテゴリの場合
+    prevButton.disabled = (currentIndex === 0);
+    // 最後のカテゴリの場合
+    nextButton.disabled = (currentIndex === categories.length - 1);
+  }
+}
+
 // 選択数の表示を更新
 function updateSelectionCount() {
   var selectionCount = document.getElementById('selectionCount');
@@ -579,6 +708,11 @@ function resetListDisplay() {
   if (listContainer) listContainer.style.display = 'none';
   if (startButton) startButton.style.display = 'none';
   if (selectionCount) selectionCount.style.display = 'none';
+  
+  // ボタンを非表示
+  hideListNavButtons();
+  // ボタンの状態をリセット
+  updateListNavButtons();
 }
 
 // エラーを表示
@@ -1320,12 +1454,64 @@ function playAudioFromCache(audioData) {
   }
   
   try {
+    // 既存のAudioがあれば停止
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      currentAudio = null;
+    }
+    
     var audio = new Audio('data:audio/mp3;base64,' + audioData.audioContent);
+    currentAudio = audio;
+    
+    // 再生開始時に再生ボタンを無効化
+    audio.addEventListener('play', function() {
+      var playButton = document.getElementById('playButton');
+      if (playButton) {
+        playButton.disabled = true;
+      }
+    });
+    
+    // 再生終了時に再生ボタンを有効化
+    audio.addEventListener('ended', function() {
+      var playButton = document.getElementById('playButton');
+      if (playButton) {
+        // 回答が画像URLの場合は無効化のまま
+        var item = currentCategoryData[currentQuestionIndex];
+        if (item && !isImageUrl(item.answer || '')) {
+          playButton.disabled = false;
+        }
+      }
+      currentAudio = null;
+    });
+    
+    // エラー時に再生ボタンを有効化
+    audio.addEventListener('error', function() {
+      var playButton = document.getElementById('playButton');
+      if (playButton) {
+        var item = currentCategoryData[currentQuestionIndex];
+        if (item && !isImageUrl(item.answer || '')) {
+          playButton.disabled = false;
+        }
+      }
+      currentAudio = null;
+    });
+    
     audio.play().catch(function(error) {
       showError('音声の再生に失敗しました: ' + error.toString());
+      // エラー時も再生ボタンを有効化
+      var playButton = document.getElementById('playButton');
+      if (playButton) {
+        var item = currentCategoryData[currentQuestionIndex];
+        if (item && !isImageUrl(item.answer || '')) {
+          playButton.disabled = false;
+        }
+      }
+      currentAudio = null;
     });
   } catch (error) {
     showError('音声の再生に失敗しました: ' + error.toString());
+    currentAudio = null;
   }
 }
 
@@ -1397,10 +1583,66 @@ function fetchAudioFromAPI(text) {
       saveAudioToCache(text, data.audioContent);
       
       // 音声データ（base64）を再生
-      var audio = new Audio('data:audio/mp3;base64,' + data.audioContent);
-      audio.play().catch(function(error) {
+      try {
+        // 既存のAudioがあれば停止
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio.currentTime = 0;
+          currentAudio = null;
+        }
+        
+        var audio = new Audio('data:audio/mp3;base64,' + data.audioContent);
+        currentAudio = audio;
+        
+        // 再生開始時に再生ボタンを無効化
+        audio.addEventListener('play', function() {
+          var playButton = document.getElementById('playButton');
+          if (playButton) {
+            playButton.disabled = true;
+          }
+        });
+        
+        // 再生終了時に再生ボタンを有効化
+        audio.addEventListener('ended', function() {
+          var playButton = document.getElementById('playButton');
+          if (playButton) {
+            // 回答が画像URLの場合は無効化のまま
+            var item = currentCategoryData[currentQuestionIndex];
+            if (item && !isImageUrl(item.answer || '')) {
+              playButton.disabled = false;
+            }
+          }
+          currentAudio = null;
+        });
+        
+        // エラー時に再生ボタンを有効化
+        audio.addEventListener('error', function() {
+          var playButton = document.getElementById('playButton');
+          if (playButton) {
+            var item = currentCategoryData[currentQuestionIndex];
+            if (item && !isImageUrl(item.answer || '')) {
+              playButton.disabled = false;
+            }
+          }
+          currentAudio = null;
+        });
+        
+        audio.play().catch(function(error) {
+          showError('音声の再生に失敗しました: ' + error.toString());
+          // エラー時も再生ボタンを有効化
+          var playButton = document.getElementById('playButton');
+          if (playButton) {
+            var item = currentCategoryData[currentQuestionIndex];
+            if (item && !isImageUrl(item.answer || '')) {
+              playButton.disabled = false;
+            }
+          }
+          currentAudio = null;
+        });
+      } catch (error) {
         showError('音声の再生に失敗しました: ' + error.toString());
-      });
+        currentAudio = null;
+      }
     } else {
       showError('音声の生成に失敗しました: ' + (data.error || 'Unknown error'));
     }
