@@ -1500,12 +1500,8 @@ function goToNextQuestion() {
         currentQuestionIndex = retryQuestionIndices[retryQuestionIndex];
         displayQuestion();
       } else {
-        // 再チャレンジ問題が全て終わった場合
-        isInRetryMode = false;
-        retryQuestionIndex = 0;
-        isLearningCompleted = true;
-        // 出題数表示を更新（完了済みとして表示）
-        updateQuestionInfoDisplay();
+        // retryQuestionIndexが範囲外だが、再チャレンジ問題が残っている場合は再度再チャレンジを開始
+        startRetryQuestions();
       }
     } else {
       // 再チャレンジ問題が全て終わった場合
@@ -1556,9 +1552,23 @@ function handlePlusButtonClick() {
       // 出題数表示を更新
       updateQuestionInfoDisplay();
       
-      // 現在の問題を再度表示
-      displayQuestion();
-      updateNavigationButtons();
+      // 次の再チャレンジ問題に進む
+      retryQuestionIndex++;
+      if (retryQuestionIndex < retryQuestionIndices.length) {
+        // 次の再チャレンジ問題がある場合
+        currentQuestionIndex = retryQuestionIndices[retryQuestionIndex];
+        displayQuestion();
+        updateNavigationButtons();
+      } else {
+        // 最後の再チャレンジ問題の場合、再チャレンジリストに残っている問題があれば再度再チャレンジを開始
+        if (retryQuestionIndices.length > 0) {
+          startRetryQuestions();
+        } else {
+          // 再チャレンジ問題がなければ学習完了
+          isLearningCompleted = true;
+          updateNavigationButtons();
+        }
+      }
     } else {
       // 通常モードの場合
       // 現在の問題を再チャレンジリストに追加（重複チェック）
