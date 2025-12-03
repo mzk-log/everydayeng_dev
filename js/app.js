@@ -19,6 +19,7 @@ var completedQuestionIndices = []; // 完了した問題のインデックスを
 var isLearningCompleted = false; // 学習が完了したかどうか
 var selectedQuestionIndices = []; // 選択された問題のインデックスを保存
 var originalCategoryData = []; // 元の全問題データ（出題数表示用）
+var isToggleActive = true; // トグルボタンの状態（ON/OFF）
 
 // 音声キャッシュ（メモリキャッシュ）
 var audioCache = {};
@@ -42,6 +43,24 @@ window.onload = function() {
   // 背景画像とボタン画像を並列で読み込む
   setBackgroundImage();
   setButtonImages();
+  
+  // トグルボタンの初期状態を設定
+  var toggleButton = document.getElementById('toggleButton');
+  if (toggleButton) {
+    if (isToggleActive) {
+      toggleButton.classList.add('active');
+    } else {
+      toggleButton.classList.remove('active');
+    }
+  }
+  
+  // トグルボタンの位置を設定（タイトルが表示された後に実行）
+  requestAnimationFrame(function() {
+    requestAnimationFrame(updateToggleButtonPosition);
+  });
+  
+  // ウィンドウリサイズ時にも位置を更新
+  window.addEventListener('resize', updateToggleButtonPosition);
 };
 
 // メールアドレスを確認し、必要に応じて入力画面を表示
@@ -258,6 +277,15 @@ function setupEventListeners() {
   
   document.getElementById('plusButton').addEventListener('click', function() {
     handlePlusButtonClick();
+  });
+  
+  document.getElementById('toggleButton').addEventListener('click', function() {
+    isToggleActive = !isToggleActive;
+    if (isToggleActive) {
+      this.classList.add('active');
+    } else {
+      this.classList.remove('active');
+    }
   });
   
   document.getElementById('loginButton').addEventListener('click', function() {
@@ -693,6 +721,21 @@ function startLearning() {
   
   // 最初の問題と次の問題をプリロード
   preloadAudioForCurrentAndNext();
+  
+  // トグルボタンの状態を引き継ぐ
+  var toggleButton = document.getElementById('toggleButton');
+  if (toggleButton) {
+    if (isToggleActive) {
+      toggleButton.classList.add('active');
+    } else {
+      toggleButton.classList.remove('active');
+    }
+  }
+  
+  // トグルボタンの位置を更新（screen2のタイトル位置に合わせる）
+  requestAnimationFrame(function() {
+    requestAnimationFrame(updateToggleButtonPosition);
+  });
 }
 
 // 学習時間カウンターを開始
@@ -905,6 +948,11 @@ function showAnswer() {
   
   // プラスボタンを有効化（回答表示中、学習完了でない場合）
   updatePlusButton();
+  
+  // トグルボタンがONの場合、自動再生
+  if (isToggleActive) {
+    playAnswer();
+  }
 }
 
 /**
@@ -1780,6 +1828,11 @@ function goToHome() {
   if (screen2) screen2.classList.remove('active');
   if (screen1) screen1.classList.add('active');
   
+  // トグルボタンの位置を更新（screen1に戻った時）
+  requestAnimationFrame(function() {
+    requestAnimationFrame(updateToggleButtonPosition);
+  });
+  
   // コンテナのパディングを元に戻す
   var container = document.querySelector('.container');
   if (container) container.classList.remove('learning-mode');
@@ -1997,5 +2050,36 @@ function updateClearButton() {
   
   // 選択がない場合は無効化
   clearButton.disabled = selectedQuestionIndices.length === 0;
+}
+
+// トグルコンテナの位置を更新（タイトルより少し下に配置）
+function updateToggleButtonPosition() {
+  var toggleContainer = document.getElementById('toggleContainer');
+  if (!toggleContainer) return;
+  
+  // 現在表示されている画面のタイトルを取得
+  var screen1 = document.getElementById('screen1');
+  var screen2 = document.getElementById('screen2');
+  var title = null;
+  
+  if (screen1 && screen1.classList.contains('active')) {
+    title = screen1.querySelector('.title');
+  } else if (screen2 && screen2.classList.contains('active')) {
+    title = screen2.querySelector('.title');
+  } else {
+    // どちらもactiveでない場合は、表示されているタイトルを取得
+    title = document.querySelector('.title');
+  }
+  
+  if (!title) return;
+  
+  // タイトルの位置を取得
+  var titleRect = title.getBoundingClientRect();
+  
+  // タイトルの中央の高さにコンテナを配置し、少し下に下げる（オフセット-18px）
+  // コンテナの高さを考慮して中央揃え
+  var toggleTop = titleRect.top + (titleRect.height / 2) - 18;
+  
+  toggleContainer.style.top = toggleTop + 'px';
 }
 
