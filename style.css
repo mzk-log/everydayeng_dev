@@ -237,6 +237,13 @@ th {
   /* display: table-cell のまま（position: sticky を維持） */
 }
 
+/* No列の最小幅設定（クリアボタンが下に落ちないように） */
+#listTable thead th:first-child,
+#listTable tbody td:first-child {
+  min-width: 60px;
+  white-space: nowrap;
+}
+
 /* No列ヘッダー内のspanとbuttonを横並びに */
 #listTable thead th:first-child span {
   display: inline-block;
@@ -1600,6 +1607,17 @@ body:has(#screen2.active) .login-button {
   /* 画像モーダル内の画像(480px) */
   .image-modal-image {
     max-height: 85vh;
+  }
+
+  /* No列の最小幅設定(480px) */
+  #listTable thead th:first-child,
+  #listTable tbody td:first-child {
+    min-width: 50px !important;
+  }
+
+  /* No列ヘッダー内のspanとbuttonの間隔(480px) */
+  #listTable thead th:first-child span {
+    margin-right: 5px !important;
   }
 
   /* リスト表示用サムネイル(480px) */
