@@ -17,6 +17,8 @@ var isInRetryMode = false; // 再チャレンジモードかどうか
 var retryQuestionIndex = 0; // 現在の再チャレンジ問題のインデックス
 var completedQuestionIndices = []; // 完了した問題のインデックスを保存（灰色表示）
 var isLearningCompleted = false; // 学習が完了したかどうか
+var selectedQuestionIndices = []; // 選択された問題のインデックスを保存
+var originalCategoryData = []; // 元の全問題データ（出題数表示用）
 
 // 音声キャッシュ（メモリキャッシュ）
 var audioCache = {};
@@ -289,6 +291,7 @@ function setupEventListeners() {
       if (item) {
         updateModalContent(item);
         updateModalNavigation();
+        updateModalSelection();
       }
     }
   });
@@ -301,8 +304,19 @@ function setupEventListeners() {
       if (item) {
         updateModalContent(item);
         updateModalNavigation();
+        updateModalSelection();
       }
     }
+  });
+  
+  // モーダル内の選択ボタン
+  document.getElementById('modalSelectButton').addEventListener('click', function() {
+    handleModalSelection();
+  });
+  
+  // クリアボタン
+  document.getElementById('clearSelectionButton').addEventListener('click', function() {
+    clearSelection();
   });
 }
 
@@ -354,6 +368,8 @@ function loadCategoryData(categoryNo) {
         
         currentCategoryData = data.items;
         currentCategoryNo = categoryNo;
+        // 選択状態をリセット
+        selectedQuestionIndices = [];
         displayList();
         
         // ローディング非表示
@@ -392,10 +408,21 @@ function displayList() {
     }
   }
   
-  currentCategoryData.forEach(function(item) {
+  currentCategoryData.forEach(function(item, index) {
     var row = document.createElement('tr');
+    var isSelected = selectedQuestionIndices.indexOf(index) !== -1;
+    
+    // 選択状態に応じてクラスを追加
+    if (isSelected) {
+      row.classList.add('selected-row');
+    }
+    
     var noCell = document.createElement('td');
     noCell.textContent = item.no || '';
+    // 選択状態に応じてNo列にクラスを追加
+    if (isSelected) {
+      noCell.classList.add('selected-no');
+    }
     var questionCell = document.createElement('td');
     // Question列の値を表示（画像対応）
     var questionContent = item.question || item.Question || '';
@@ -425,14 +452,34 @@ function displayList() {
     row.appendChild(noCell);
     row.appendChild(questionCell);
     
-    // 行クリックでモーダルを表示
-    row.addEventListener('click', function() {
-      var index = currentCategoryData.indexOf(item);
-      showModal(item, index);
+    // シングルクリックで選択/解除（トグル）
+    var clickTimer = null;
+    row.addEventListener('click', function(e) {
+      if (clickTimer === null) {
+        clickTimer = setTimeout(function() {
+          clickTimer = null;
+          // シングルクリック：選択/解除
+          toggleQuestionSelection(index, row);
+        }, 300);
+      }
+    });
+    
+    // ダブルクリックでモーダル表示
+    row.addEventListener('dblclick', function(e) {
+      e.preventDefault();
+      if (clickTimer) {
+        clearTimeout(clickTimer);
+        clickTimer = null;
+      }
+      var itemIndex = currentCategoryData.indexOf(item);
+      showModal(item, itemIndex);
     });
     
     tableBody.appendChild(row);
   });
+  
+  // 選択数の表示を更新
+  updateSelectionCount();
   
   var listMessage = document.getElementById('listMessage');
   var listContainer = document.getElementById('listContainer');
@@ -443,15 +490,67 @@ function displayList() {
   if (startButton) startButton.style.display = 'block';
 }
 
+// 問題の選択/解除をトグル
+function toggleQuestionSelection(index, row) {
+  var selectedIndex = selectedQuestionIndices.indexOf(index);
+  var noCell = row.querySelector('td:first-child'); // No列を取得
+  if (selectedIndex === -1) {
+    // 選択
+    selectedQuestionIndices.push(index);
+    row.classList.add('selected-row');
+    if (noCell) noCell.classList.add('selected-no');
+  } else {
+    // 解除
+    selectedQuestionIndices.splice(selectedIndex, 1);
+    row.classList.remove('selected-row');
+    if (noCell) noCell.classList.remove('selected-no');
+  }
+  updateSelectionCount();
+}
+
+// 選択数の表示を更新
+function updateSelectionCount() {
+  var selectionCount = document.getElementById('selectionCount');
+  if (!selectionCount) return;
+  
+  var totalCount = currentCategoryData.length;
+  var selectedCount = selectedQuestionIndices.length;
+  
+  if (selectedCount === 0) {
+    // 未選択時は全問表示
+    selectionCount.textContent = '全' + totalCount + '問';
+    selectionCount.style.display = 'inline';
+  } else {
+    // 選択された問題のNoを取得して表示
+    var selectedNos = [];
+    selectedQuestionIndices.sort(function(a, b) { return a - b; }); // インデックスをソート
+    selectedQuestionIndices.forEach(function(index) {
+      if (index >= 0 && index < currentCategoryData.length) {
+        var no = currentCategoryData[index].no;
+        if (no) {
+          selectedNos.push(no);
+        }
+      }
+    });
+    selectionCount.textContent = '全' + selectedCount + '問(' + selectedNos.join(',') + ')';
+    selectionCount.style.display = 'inline';
+  }
+  
+  // クリアボタンの有効/無効を更新
+  updateClearButton();
+}
+
 // リスト表示をリセット
 function resetListDisplay() {
   var listMessage = document.getElementById('listMessage');
   var listContainer = document.getElementById('listContainer');
   var startButton = document.getElementById('startButton');
+  var selectionCount = document.getElementById('selectionCount');
   
   if (listMessage) listMessage.style.display = 'block';
   if (listContainer) listContainer.style.display = 'none';
   if (startButton) startButton.style.display = 'none';
+  if (selectionCount) selectionCount.style.display = 'none';
 }
 
 // エラーを表示
@@ -535,6 +634,27 @@ function startLearning() {
     return;
   }
   
+  // 元のデータを保存
+  originalCategoryData = currentCategoryData.slice();
+  
+  // 選択された問題のみを抽出（未選択時は全問）
+  var filteredData = [];
+  if (selectedQuestionIndices.length === 0) {
+    // 未選択時は全問
+    filteredData = currentCategoryData.slice();
+  } else {
+    // 選択された問題のみ（元の順序で）
+    selectedQuestionIndices.sort(function(a, b) { return a - b; }); // インデックスをソート
+    selectedQuestionIndices.forEach(function(index) {
+      if (index >= 0 && index < currentCategoryData.length) {
+        filteredData.push(currentCategoryData[index]);
+      }
+    });
+  }
+  
+  // フィルタリングされたデータをcurrentCategoryDataに設定
+  currentCategoryData = filteredData;
+  
   // 画面遷移
   var screen1 = document.getElementById('screen1');
   var screen2 = document.getElementById('screen2');
@@ -565,6 +685,9 @@ function startLearning() {
   retryQuestionIndex = 0;
   completedQuestionIndices = [];
   isLearningCompleted = false;
+  
+  // 出題数表示を更新
+  updateQuestionInfoDisplay();
   
   displayQuestion();
   
@@ -1471,16 +1594,85 @@ function updateQuestionInfoDisplay() {
   var questionInfo = document.getElementById('questionInfo');
   if (!questionInfo) return;
   
-  var totalQuestions = currentCategoryData.length;
+  // 元の全問題データを使用（選択されなかった問題も表示するため）
+  var totalQuestions = originalCategoryData.length > 0 ? originalCategoryData.length : currentCategoryData.length;
   var displayItems = [];
+  
+  // 現在の問題が元のデータのどのインデックスに対応するかを取得
+  var originalCurrentIndex = -1;
+  if (currentQuestionIndex >= 0 && currentQuestionIndex < currentCategoryData.length) {
+    var currentItem = currentCategoryData[currentQuestionIndex];
+    // 元のデータから同じ問題を検索
+    for (var idx = 0; idx < originalCategoryData.length; idx++) {
+      if (originalCategoryData[idx] === currentItem || 
+          (originalCategoryData[idx].no === currentItem.no && 
+           originalCategoryData[idx].question === currentItem.question)) {
+        originalCurrentIndex = idx;
+        break;
+      }
+    }
+  }
+  
+  // 選択された問題のインデックスを元のデータのインデックスに変換
+  var originalSelectedIndices = [];
+  if (selectedQuestionIndices.length > 0) {
+    originalSelectedIndices = selectedQuestionIndices.slice();
+  } else {
+    // 未選択時は全問が選択されている
+    for (var j = 0; j < totalQuestions; j++) {
+      originalSelectedIndices.push(j);
+    }
+  }
+  
+  // retryQuestionIndicesを元のデータのインデックスに変換
+  var originalRetryIndices = [];
+  if (retryQuestionIndices.length > 0 && originalCategoryData.length > 0) {
+    retryQuestionIndices.forEach(function(filteredIndex) {
+      if (filteredIndex >= 0 && filteredIndex < currentCategoryData.length) {
+        var retryItem = currentCategoryData[filteredIndex];
+        // 元のデータから同じ問題を検索
+        for (var retryIdx = 0; retryIdx < originalCategoryData.length; retryIdx++) {
+          if (originalCategoryData[retryIdx] === retryItem || 
+              (originalCategoryData[retryIdx].no === retryItem.no && 
+               originalCategoryData[retryIdx].question === retryItem.question)) {
+            originalRetryIndices.push(retryIdx);
+            break;
+          }
+        }
+      }
+    });
+  }
+  
+  // completedQuestionIndicesを元のデータのインデックスに変換
+  var originalCompletedIndices = [];
+  if (completedQuestionIndices.length > 0 && originalCategoryData.length > 0) {
+    completedQuestionIndices.forEach(function(filteredIndex) {
+      if (filteredIndex >= 0 && filteredIndex < currentCategoryData.length) {
+        var completedItem = currentCategoryData[filteredIndex];
+        // 元のデータから同じ問題を検索
+        for (var completedIdx = 0; completedIdx < originalCategoryData.length; completedIdx++) {
+          if (originalCategoryData[completedIdx] === completedItem || 
+              (originalCategoryData[completedIdx].no === completedItem.no && 
+               originalCategoryData[completedIdx].question === completedItem.question)) {
+            originalCompletedIndices.push(completedIdx);
+            break;
+          }
+        }
+      }
+    });
+  }
   
   for (var i = 0; i < totalQuestions; i++) {
     var questionNum = i + 1;
-    var isCurrent = (i === currentQuestionIndex);
-    var isCompleted = (completedQuestionIndices.indexOf(i) !== -1);
-    var isRetry = (retryQuestionIndices.indexOf(i) !== -1);
+    var isCurrent = (i === originalCurrentIndex);
+    var isCompleted = (originalCompletedIndices.indexOf(i) !== -1);
+    var isRetry = (originalRetryIndices.indexOf(i) !== -1);
+    var isSelected = (originalSelectedIndices.indexOf(i) !== -1);
     
-    if (isCompleted) {
+    if (!isSelected) {
+      // 選択されなかった問題：グレー色
+      displayItems.push('<span style="color: #999;">' + questionNum + '</span>');
+    } else if (isCompleted) {
       // 完了済み（＞ボタンを押した）：灰色通常（最優先）
       displayItems.push('<span style="color: #999;">' + questionNum + '</span>');
     } else if (isCurrent && isRetry) {
@@ -1582,6 +1774,10 @@ function goToHome() {
   var container = document.querySelector('.container');
   if (container) container.classList.remove('learning-mode');
   
+  // 選択状態をリセット
+  selectedQuestionIndices = [];
+  originalCategoryData = [];
+  
   // 学習時間はリセットしない（継続）
 }
 
@@ -1607,6 +1803,9 @@ function showModal(item, index) {
   
   // ナビゲーションボタンの状態を更新
   updateModalNavigation();
+  
+  // 選択状態を更新
+  updateModalSelection();
   
   // モーダルを表示
   var modalOverlay = document.getElementById('modalOverlay');
@@ -1700,5 +1899,93 @@ function closeModal() {
   if (modalOverlay) {
     modalOverlay.classList.remove('active');
   }
+}
+
+// モーダル内の選択状態を更新
+function updateModalSelection() {
+  var selectButton = document.getElementById('modalSelectButton');
+  if (!selectButton) return;
+  
+  var isSelected = selectedQuestionIndices.indexOf(modalCurrentIndex) !== -1;
+  if (isSelected) {
+    selectButton.classList.add('selected');
+  } else {
+    selectButton.classList.remove('selected');
+  }
+}
+
+// モーダル内の選択/解除を実行
+function handleModalSelection() {
+  var index = modalCurrentIndex;
+  var selectedIndex = selectedQuestionIndices.indexOf(index);
+  
+  if (selectedIndex === -1) {
+    // 選択
+    selectedQuestionIndices.push(index);
+  } else {
+    // 解除
+    selectedQuestionIndices.splice(selectedIndex, 1);
+  }
+  
+  // モーダル内の選択状態を更新
+  updateModalSelection();
+  
+  // リスト側の選択状態も更新
+  updateListSelection(index);
+  
+  // 選択数の表示を更新
+  updateSelectionCount();
+}
+
+// リスト側の選択状態を更新
+function updateListSelection(index) {
+  var tableBody = document.getElementById('listTableBody');
+  if (!tableBody) return;
+  
+  var rows = tableBody.querySelectorAll('tr');
+  if (index >= 0 && index < rows.length) {
+    var row = rows[index];
+    var noCell = row.querySelector('td:first-child');
+    var isSelected = selectedQuestionIndices.indexOf(index) !== -1;
+    
+    if (isSelected) {
+      row.classList.add('selected-row');
+      if (noCell) noCell.classList.add('selected-no');
+    } else {
+      row.classList.remove('selected-row');
+      if (noCell) noCell.classList.remove('selected-no');
+    }
+  }
+}
+
+// 選択をクリア
+function clearSelection() {
+  // 選択状態をクリア
+  selectedQuestionIndices = [];
+  
+  // 全行の選択状態を解除
+  var tableBody = document.getElementById('listTableBody');
+  if (tableBody) {
+    var rows = tableBody.querySelectorAll('tr');
+    rows.forEach(function(row) {
+      var noCell = row.querySelector('td:first-child');
+      if (noCell) {
+        noCell.classList.remove('selected-no');
+      }
+      row.classList.remove('selected-row');
+    });
+  }
+  
+  // 選択数表示を更新（クリアボタンの状態も更新される）
+  updateSelectionCount();
+}
+
+// クリアボタンの有効/無効を更新
+function updateClearButton() {
+  var clearButton = document.getElementById('clearSelectionButton');
+  if (!clearButton) return;
+  
+  // 選択がない場合は無効化
+  clearButton.disabled = selectedQuestionIndices.length === 0;
 }
 

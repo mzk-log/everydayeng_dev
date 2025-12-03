@@ -31,13 +31,21 @@
         </div>
         
         <div class="section">
-          <div class="section-label">List</div>
+          <div class="section-label-container">
+            <div class="section-label">List</div>
+            <span id="selectionCount" class="selection-count" style="display: none;"></span>
+          </div>
           <div id="listMessage" class="message">Categoryを選択してください。</div>
           <div id="listContainer" class="table-container" style="display: none;">
             <table id="listTable">
               <thead>
                 <tr>
-                  <th>No</th>
+                  <th>
+                    <span>No</span>
+                    <button id="clearSelectionButton" type="button" class="clear-button">
+                      <img src="img/clear.png" alt="クリア">
+                    </button>
+                  </th>
                   <th id="listTableHeader"></th>
                 </tr>
               </thead>
@@ -132,6 +140,11 @@
             <div class="modal-nav-info" id="modalNavInfo">1/10</div>
             <button class="modal-nav-button" id="modalNextButton" type="button">
               <img src="img/arrow.png" alt="次へ">
+            </button>
+          </div>
+          <div class="modal-selection">
+            <button class="modal-select-button" id="modalSelectButton" type="button">
+              <span id="modalSelectIcon">✓</span>
             </button>
           </div>
         </div>

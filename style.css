@@ -90,16 +90,31 @@ body {
   overflow-y: auto;
 }
 
+/* セクションラベルコンテナ */
+.section-label-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
 /* セクションラベル */
 .section-label {
   font-size: 16px;
-  margin-bottom: 10px;
+  margin-bottom: 0;
+  margin-right: 10px;
 }
 
 /* セクションラベルの前に記号を追加 */
 .section-label::before {
   content: '◆';
   margin-right: 5px;
+}
+
+/* 選択数表示 */
+.selection-count {
+  font-size: 16px;
+  color: #666;
+  margin-left: 5px;
 }
 
 /* セレクトボックスコンテナ */
@@ -217,6 +232,43 @@ th {
   z-index: 10;
 }
 
+/* No列ヘッダーのレイアウト */
+#listTable thead th:first-child {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+/* クリアボタン */
+.clear-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.clear-button img {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.clear-button:hover:not(:disabled) {
+  opacity: 0.7;
+}
+
+.clear-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
 /* 最後の行のセル */
 tr:last-child td {
   border-bottom: none;
@@ -227,6 +279,38 @@ tr:last-child td {
 #listTable td {
   white-space: pre-line;
   display: table-cell;
+}
+
+/* 行のホバー効果 */
+#listTable tbody tr {
+  cursor: pointer;
+}
+
+/* 選択されたNo列のスタイル */
+#listTable tbody td.selected-no {
+  background-color: #c8e6c9;
+  position: relative;
+}
+
+/* 選択されたNo列の左側インジケーター */
+#listTable tbody td.selected-no::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: #4CAF50;
+}
+
+/* 行のホバー効果（No列のみ） */
+#listTable tbody tr:hover td:first-child {
+  background-color: #f5f5f5;
+}
+
+/* 選択された行のホバー効果（No列のみ） */
+#listTable tbody tr:hover td.selected-no {
+  background-color: #a5d6a7;
 }
 
 /* スタートボタン */
@@ -759,6 +843,48 @@ body:has(#screen2.active) .login-button {
   margin-top: 20px;
   padding-top: 15px;
   border-top: 1px solid #ddd;
+}
+
+/* モーダル選択エリア */
+.modal-selection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+  padding-top: 5px;
+}
+
+/* モーダル選択ボタン */
+.modal-select-button {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #4CAF50;
+  background-color: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #4CAF50;
+  transition: all 0.2s ease;
+}
+
+.modal-select-button:hover {
+  background-color: #f5f5f5;
+}
+
+.modal-select-button.selected {
+  background-color: #c8e6c9;
+  border-color: #4CAF50;
+}
+
+.modal-select-button.selected #modalSelectIcon {
+  display: block;
+}
+
+.modal-select-button:not(.selected) #modalSelectIcon {
+  display: none;
 }
 
 /* モーダル内ナビゲーションボタン */
