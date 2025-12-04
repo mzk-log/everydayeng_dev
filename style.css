@@ -401,7 +401,7 @@ tr:last-child td {
   border-radius: 8px;
   cursor: pointer;
   margin-top: 10px;
-  margin-bottom: 120px;
+  margin-bottom: 10px;
   flex-shrink: 0;
   position: sticky;
   bottom: 0;
@@ -1200,7 +1200,7 @@ body:has(#screen2.active) .login-button {
 /* 学習完了メッセージセクション */
 #screen2 .completion-message-section {
   position: fixed;
-  bottom: 180px; /* navigation-barの高さ（約70px）+ 間隔（5px） */
+  bottom: 80px; /* navigation-barの高さ(概算)分を調整 */ 
   left: 0;
   right: 0;
   z-index: 90; /* navigation-bar（z-index: 100）より低く */
@@ -1253,7 +1253,7 @@ body:has(#screen2.active) .login-button {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  max-height: calc(100dvh - 180px);
+  max-height: calc(100dvh - 0px);
   -webkit-overflow-scrolling: touch;
 }
 
