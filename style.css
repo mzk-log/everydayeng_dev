@@ -599,41 +599,34 @@ tr:last-child td {
   justify-content: center;
 }
 
-/* 前へボタン: 絶対配置を解除、順序を1に */
-#prevButton {
-  position: relative;
-  left: auto;
-  order: 1;
-}
-
-/* 再生ボタンコンテナ（ナビゲーションバー内）: 絶対配置を解除、順序を3に */
+/* 再生ボタンコンテナ（ナビゲーションバー内）: 絶対配置を解除、順序を1に */
 .navigation-bar .play-button-container {
   position: relative;
   left: auto;
-  order: 3;
+  order: 1;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* 次へボタン: 絶対配置を解除、順序を4に */
+/* 次へボタン: 絶対配置を解除、順序を3に */
 #nextButton {
+  position: relative;
+  left: auto;
+  order: 3;
+}
+
+/* プラスボタン: 絶対配置を解除、順序を4に */
+#plusButton {
   position: relative;
   left: auto;
   order: 4;
 }
 
-/* プラスボタン: 絶対配置を解除、順序を5に */
-#plusButton {
-  position: relative;
-  left: auto;
-  order: 5;
-}
-
-/* ホームボタン: 右余白を削除、順序を6に */
+/* ホームボタン: 右余白を削除、順序を5に */
 #homeButton {
   margin-right: 0;
-  order: 6;
+  order: 5;
 }
 
 /* ナビゲーションボタンの画像 */
@@ -649,10 +642,6 @@ tr:last-child td {
   cursor: not-allowed;
 }
 
-/* 前へボタンの画像（180度回転） */
-.nav-button.arrow-left img {
-  transform: rotate(180deg);
-}
 
 /* ナビゲーションバー中央のAnswerボタン */
 .nav-answer-button {
@@ -1208,6 +1197,25 @@ body:has(#screen2.active) .login-button {
   border-radius: 6px;
 }
 
+/* 学習完了メッセージセクション */
+#screen2 .completion-message-section {
+  position: fixed;
+  bottom: 180px; /* navigation-barの高さ（約70px）+ 間隔（5px） */
+  left: 0;
+  right: 0;
+  z-index: 90; /* navigation-bar（z-index: 100）より低く */
+}
+
+/* 学習完了メッセージ */
+.completion-message {
+  font-size: 24px;
+  font-weight: bold;
+  color: #000000;
+  text-align: center;
+  padding: 0 15px;
+  margin: 0;
+}
+
 /* 学習画面 */
 #screen2 {
   display: none;
@@ -1679,31 +1687,31 @@ body:has(#screen2.active) .login-button {
     order: 2 !important;
   }
 
-  /* 再生ボタンコンテナ(480px) - 位置指定を解除、順序を3に */
+  /* 再生ボタンコンテナ(480px) - 位置指定を解除、順序を1に */
   .navigation-bar .play-button-container {
+    position: relative !important;
+    left: auto !important;
+    order: 1 !important;
+  }
+
+  /* 次へボタン(480px) - 位置指定を解除、順序を3に */
+  #nextButton {
     position: relative !important;
     left: auto !important;
     order: 3 !important;
   }
 
-  /* 次へボタン(480px) - 位置指定を解除、順序を4に */
-  #nextButton {
+  /* プラスボタン(480px) - 位置指定を解除、順序を4に */
+  #plusButton {
     position: relative !important;
     left: auto !important;
     order: 4 !important;
   }
 
-  /* プラスボタン(480px) - 位置指定を解除、順序を5に */
-  #plusButton {
-    position: relative !important;
-    left: auto !important;
-    order: 5 !important;
-  }
-
-  /* ホームボタン(480px) - 右余白を調整、順序を6に */
+  /* ホームボタン(480px) - 右余白を調整、順序を5に */
   #homeButton {
     margin-right: 0 !important;
-    order: 6 !important;
+    order: 5 !important;
   }
 
   /* 画像モーダル閉じるボタン(480px) */
