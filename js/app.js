@@ -36,7 +36,20 @@ var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxTBkXrUOsYjzb1xERU-G
 // 学習完了メッセージの定数配列
 var COMPLETION_MESSAGES = [
   'Good job!',
-  'Excellent!'
+  'がんばってるじゃん！',
+  'Excellent!',
+  'その調子！'
+];
+
+// 学習完了メッセージ用のアイコン画像ファイル名
+var COMPLETION_MESSAGE_IMAGES = [
+  'msg-ino-01.png',
+  'msg-manmos-01.png',
+  'msg-putera-01.png',
+  'msg-smiley-01.png',
+  'msg-smiley-02.png',
+  'msg-thumb-01.png',
+  'msg-uma-01.png'
 ];
 
 // 初期化
@@ -2086,14 +2099,20 @@ function updatePlusButton() {
 // 学習完了メッセージを表示
 function showCompletionMessage() {
   var completionSection = document.getElementById('completionMessageSection');
-  var completionMessage = document.getElementById('completionMessage');
+  var completionMessageText = document.querySelector('#completionMessage .completion-message-text');
+  var completionMessageIcon = document.getElementById('completionMessageIcon');
   
-  if (completionSection && completionMessage) {
+  if (completionSection && completionMessageText && completionMessageIcon) {
     // メッセージをランダムに選択
-    var randomIndex = Math.floor(Math.random() * COMPLETION_MESSAGES.length);
-    var message = COMPLETION_MESSAGES[randomIndex];
+    var randomMessageIndex = Math.floor(Math.random() * COMPLETION_MESSAGES.length);
+    var message = COMPLETION_MESSAGES[randomMessageIndex];
     
-    completionMessage.textContent = message;
+    // アイコン画像をランダムに選択
+    var randomImageIndex = Math.floor(Math.random() * COMPLETION_MESSAGE_IMAGES.length);
+    var imageFileName = COMPLETION_MESSAGE_IMAGES[randomImageIndex];
+    
+    completionMessageText.textContent = message;
+    completionMessageIcon.src = 'img/msg/' + imageFileName;
     completionSection.style.display = 'block';
   }
 }

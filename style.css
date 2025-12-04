@@ -1214,6 +1214,22 @@ body:has(#screen2.active) .login-button {
   text-align: center;
   padding: 0 15px;
   margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.completion-message-text {
+  display: inline-block;
+}
+
+.completion-message-icon {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: middle;
+  object-fit: contain;
 }
 
 /* 学習画面 */
