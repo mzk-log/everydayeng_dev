@@ -83,6 +83,21 @@ window.onload = function() {
   window.addEventListener('resize', updateToggleButtonPosition);
 };
 
+// ページローディングを非表示にする
+function hidePageLoading() {
+  var loadingOverlay = document.getElementById('pageLoadingOverlay');
+  if (loadingOverlay) {
+    // フェードアウトアニメーション
+    loadingOverlay.classList.add('hidden');
+    // アニメーション完了後にDOMから削除
+    setTimeout(function() {
+      if (loadingOverlay.parentNode) {
+        loadingOverlay.parentNode.removeChild(loadingOverlay);
+      }
+    }, 300); // transition時間（0.3s）に合わせる
+  }
+}
+
 // メールアドレスを確認し、必要に応じて入力画面を表示
 function checkUserEmail() {
   // localStorageからメールアドレスを取得
@@ -231,6 +246,8 @@ function loadCategories() {
         }
         // ボタンの状態を更新
         updateListNavButtons();
+        // ページローディングを非表示（Googleスプレッドシートの読み込み完了）
+        hidePageLoading();
       } catch (e) {
         showError('データ読み込みエラー: ' + e.toString());
         if (select) {
@@ -239,6 +256,8 @@ function loadCategories() {
         if (loadingSpinner) {
           loadingSpinner.style.display = 'none';
         }
+        // ページローディングを非表示（エラー時も非表示）
+        hidePageLoading();
       }
     })
     .catch(function(error) {
@@ -249,6 +268,8 @@ function loadCategories() {
       if (loadingSpinner) {
         loadingSpinner.style.display = 'none';
       }
+      // ページローディングを非表示（エラー時も非表示）
+      hidePageLoading();
     });
 }
 
