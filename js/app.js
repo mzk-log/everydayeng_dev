@@ -38,7 +38,12 @@ var COMPLETION_MESSAGES = [
   'Good job!',
   'がんばってるじゃん！',
   'Excellent!',
-  'その調子！'
+  'その調子！',
+  'Well done!',
+  'すごいね！',
+  'Great work!',
+  'いいよ！いいよ！',
+  'Keep it up!'
 ];
 
 // 学習完了メッセージ用のアイコン画像ファイル名
@@ -49,6 +54,11 @@ var COMPLETION_MESSAGE_IMAGES = [
   'msg-smiley-01.png',
   'msg-smiley-02.png',
   'msg-thumb-01.png',
+  'msg-risu-01.png',
+  'msg-same-01.png',
+  'msg-sakuranbo-01.png',
+  'msg-tatunootoshigo-01.png',
+  'msg-sakana-01.png',
   'msg-uma-01.png'
 ];
 
