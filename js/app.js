@@ -1154,6 +1154,48 @@ function showAnswer() {
 }
 
 /**
+ * ISO 8601形式の日時文字列かどうかを判定
+ * @param {string} text - 判定する文字列
+ * @returns {boolean} ISO 8601形式の日時文字列の場合true
+ */
+function isIsoDateTimeString(text) {
+  if (!text || typeof text !== 'string') return false;
+  var trimmed = text.trim();
+  // ISO 8601形式のパターン（例: 1868-03-31T14:41:01.000Z または 1868-03-31T14:41:01Z）
+  var isoPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/;
+  return isoPattern.test(trimmed);
+}
+
+/**
+ * ISO 8601形式の日時文字列を「YYYY年M月」形式に変換
+ * @param {string} isoString - ISO 8601形式の日時文字列
+ * @returns {string} 「YYYY年M月」形式の文字列
+ */
+function formatIsoDateTimeToYearMonth(isoString) {
+  if (!isoString || typeof isoString !== 'string') return isoString;
+  
+  try {
+    // ISO 8601文字列をDateオブジェクトに変換
+    var date = new Date(isoString);
+    
+    // 無効な日付の場合は元の文字列を返す
+    if (isNaN(date.getTime())) {
+      return isoString;
+    }
+    
+    // 年と月を取得
+    var year = date.getFullYear();
+    var month = date.getMonth() + 1; // getMonth()は0-11を返すため+1
+    
+    // 「YYYY年M月」形式に変換
+    return year + '年' + month + '月';
+  } catch (e) {
+    // エラーが発生した場合は元の文字列を返す
+    return isoString;
+  }
+}
+
+/**
  * 画像URLかどうかを判定
  * @param {string} url - 判定する文字列
  * @returns {boolean} 画像URLの場合true
@@ -1224,6 +1266,10 @@ function displayImageOrText(element, content) {
     
     element.innerHTML = '';
     element.appendChild(img);
+  } else if (isIsoDateTimeString(trimmedContent)) {
+    // ISO 8601形式の日時文字列の場合、「YYYY年M月」形式に変換
+    var formattedDate = formatIsoDateTimeToYearMonth(trimmedContent);
+    element.textContent = formattedDate;
   } else {
     // テキストの場合
     element.textContent = trimmedContent;
