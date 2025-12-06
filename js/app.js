@@ -19,7 +19,8 @@ var completedQuestionIndices = []; // 完了した問題のインデックスを
 var isLearningCompleted = false; // 学習が完了したかどうか
 var selectedQuestionIndices = []; // 選択された問題のインデックスを保存
 var originalCategoryData = []; // 元の全問題データ（出題数表示用）
-var isToggleActive = true; // トグルボタンの状態（ON/OFF）
+var isQuestionToggleActive = false; // 出題読みトグルボタンの状態（ON/OFF）
+var isAnswerToggleActive = false; // 解答読みトグルボタンの状態（ON/OFF）
 var currentAudio = null; // 現在再生中のAudioオブジェクト
 
 // 音声キャッシュ（メモリキャッシュ）
@@ -75,12 +76,20 @@ window.onload = function() {
   setButtonImages();
   
   // トグルボタンの初期状態を設定
-  var toggleButton = document.getElementById('toggleButton');
-  if (toggleButton) {
-    if (isToggleActive) {
-      toggleButton.classList.add('active');
+  var questionToggleButton = document.getElementById('questionToggleButton');
+  var answerToggleButton = document.getElementById('answerToggleButton');
+  if (questionToggleButton) {
+    if (isQuestionToggleActive) {
+      questionToggleButton.classList.add('active');
     } else {
-      toggleButton.classList.remove('active');
+      questionToggleButton.classList.remove('active');
+    }
+  }
+  if (answerToggleButton) {
+    if (isAnswerToggleActive) {
+      answerToggleButton.classList.add('active');
+    } else {
+      answerToggleButton.classList.remove('active');
     }
   }
   
@@ -325,9 +334,20 @@ function setupEventListeners() {
     handlePlusButtonClick();
   });
   
-  document.getElementById('toggleButton').addEventListener('click', function() {
-    isToggleActive = !isToggleActive;
-    if (isToggleActive) {
+  // 出題読みトグルボタン
+  document.getElementById('questionToggleButton').addEventListener('click', function() {
+    isQuestionToggleActive = !isQuestionToggleActive;
+    if (isQuestionToggleActive) {
+      this.classList.add('active');
+    } else {
+      this.classList.remove('active');
+    }
+  });
+  
+  // 解答読みトグルボタン
+  document.getElementById('answerToggleButton').addEventListener('click', function() {
+    isAnswerToggleActive = !isAnswerToggleActive;
+    if (isAnswerToggleActive) {
       this.classList.add('active');
     } else {
       this.classList.remove('active');
@@ -923,12 +943,20 @@ function startLearning() {
   preloadAudioForCurrentAndNext();
   
   // トグルボタンの状態を引き継ぐ
-  var toggleButton = document.getElementById('toggleButton');
-  if (toggleButton) {
-    if (isToggleActive) {
-      toggleButton.classList.add('active');
+  var questionToggleButton = document.getElementById('questionToggleButton');
+  var answerToggleButton = document.getElementById('answerToggleButton');
+  if (questionToggleButton) {
+    if (isQuestionToggleActive) {
+      questionToggleButton.classList.add('active');
     } else {
-      toggleButton.classList.remove('active');
+      questionToggleButton.classList.remove('active');
+    }
+  }
+  if (answerToggleButton) {
+    if (isAnswerToggleActive) {
+      answerToggleButton.classList.add('active');
+    } else {
+      answerToggleButton.classList.remove('active');
     }
   }
   
@@ -1019,10 +1047,16 @@ function displayQuestion() {
   if (noteSection) noteSection.style.display = 'none';
   isAnswerShown = false;
   
-  // 再生ボタンを無効化（問題表示時）
+  // 再生ボタンの制御（質問文が画像URLの場合は無効化、それ以外は有効化）
   var playButton = document.getElementById('playButton');
   if (playButton) {
-    playButton.disabled = true;
+    if (isImageUrl(item.question || '')) {
+      // 質問文が画像URLの場合は無効化
+      playButton.disabled = true;
+    } else {
+      // 質問文がテキストの場合は有効化（出題中に質問文を読み上げ可能）
+      playButton.disabled = false;
+    }
   }
   
   // ストップウォッチをリセットして開始
@@ -1036,6 +1070,16 @@ function displayQuestion() {
   // プラスボタンを無効化（出題中）
   var plusButton = document.getElementById('plusButton');
   if (plusButton) plusButton.disabled = true;
+  
+  // 出題読みトグルボタンがONの場合、250ms待ってから出題文を自動再生
+  if (isQuestionToggleActive) {
+    setTimeout(function() {
+      var item = currentCategoryData[currentQuestionIndex];
+      if (item && item.question && !isImageUrl(item.question)) {
+        playAnswer(); // 出題中なので質問文を読み上げ
+      }
+    }, 250);
+  }
   
   // 次の問題をプリロード（バックグラウンドで非同期実行）
   preloadNextQuestions();
@@ -1119,14 +1163,14 @@ function showAnswer() {
     answerTextDisplay.style.display = 'block';
   }
   
-  // 再生ボタンの制御（回答が画像URLの場合は無効化）
+  // 再生ボタンの制御（回答が画像URLの場合は無効化、テキストの場合は有効化）
   var playButton = document.getElementById('playButton');
   if (playButton) {
     if (isImageUrl(item.answer || '')) {
       // 画像URLの場合は無効化
       playButton.disabled = true;
     } else {
-      // テキストの場合は有効化
+      // テキストの場合は有効化（回答表示後は回答文を読み上げ可能）
       playButton.disabled = false;
     }
   }
@@ -1147,8 +1191,8 @@ function showAnswer() {
   // プラスボタンを有効化（回答表示中、学習完了でない場合）
   updatePlusButton();
   
-  // トグルボタンがONの場合、自動再生
-  if (isToggleActive) {
+  // 解答読みトグルボタンがONの場合、自動再生
+  if (isAnswerToggleActive) {
     playAnswer();
   }
 }
@@ -1314,13 +1358,19 @@ function showImageModal(imageUrl) {
   document.addEventListener('keydown', escHandler);
 }
 
-// 回答を読み上げ
+// 回答を読み上げ（出題中は質問文、回答表示後は回答文を読み上げ）
 function playAnswer() {
   var item = currentCategoryData[currentQuestionIndex];
-  if (!item || !item.answer) return;
+  if (!item) return;
+  
+  // 出題中（isAnswerShown === false）の場合は質問文を読み上げ
+  // 回答表示後（isAnswerShown === true）の場合は回答文を読み上げ
+  var text = isAnswerShown ? (item.answer || '') : (item.question || '');
+  
+  if (!text) return;
   
   // 画像URLの場合は音声読み上げをスキップ
-  if (isImageUrl(item.answer)) {
+  if (isImageUrl(text)) {
     return;
   }
   
@@ -1329,8 +1379,6 @@ function playAnswer() {
     showError('音声読み上げの設定が完了していません。WebアプリURLを設定してください。');
     return;
   }
-  
-  var text = item.answer;
   
   // キャッシュから音声データを取得
   var cachedAudio = getCachedAudio(text);
@@ -1586,10 +1634,13 @@ function playAudioFromCache(audioData) {
     audio.addEventListener('ended', function() {
       var playButton = document.getElementById('playButton');
       if (playButton) {
-        // 回答が画像URLの場合は無効化のまま
         var item = currentCategoryData[currentQuestionIndex];
-        if (item && !isImageUrl(item.answer || '')) {
-          playButton.disabled = false;
+        if (item) {
+          // 出題中の場合は質問文、回答表示後の場合は回答文をチェック
+          var textToCheck = isAnswerShown ? (item.answer || '') : (item.question || '');
+          if (!isImageUrl(textToCheck)) {
+            playButton.disabled = false;
+          }
         }
       }
       currentAudio = null;
@@ -1600,8 +1651,12 @@ function playAudioFromCache(audioData) {
       var playButton = document.getElementById('playButton');
       if (playButton) {
         var item = currentCategoryData[currentQuestionIndex];
-        if (item && !isImageUrl(item.answer || '')) {
-          playButton.disabled = false;
+        if (item) {
+          // 出題中の場合は質問文、回答表示後の場合は回答文をチェック
+          var textToCheck = isAnswerShown ? (item.answer || '') : (item.question || '');
+          if (!isImageUrl(textToCheck)) {
+            playButton.disabled = false;
+          }
         }
       }
       currentAudio = null;
@@ -1613,8 +1668,12 @@ function playAudioFromCache(audioData) {
       var playButton = document.getElementById('playButton');
       if (playButton) {
         var item = currentCategoryData[currentQuestionIndex];
-        if (item && !isImageUrl(item.answer || '')) {
-          playButton.disabled = false;
+        if (item) {
+          // 出題中の場合は質問文、回答表示後の場合は回答文をチェック
+          var textToCheck = isAnswerShown ? (item.answer || '') : (item.question || '');
+          if (!isImageUrl(textToCheck)) {
+            playButton.disabled = false;
+          }
         }
       }
       currentAudio = null;
@@ -1775,8 +1834,15 @@ function preloadAudioForCurrentAndNext() {
   // 現在の問題（最初の問題）をプリロード
   if (currentQuestionIndex >= 0 && currentQuestionIndex < currentCategoryData.length) {
     var currentItem = currentCategoryData[currentQuestionIndex];
-    if (currentItem && currentItem.answer) {
-      preloadAudio(currentItem.answer);
+    if (currentItem) {
+      // 出題文をプリロード
+      if (currentItem.question && !isImageUrl(currentItem.question)) {
+        preloadAudio(currentItem.question);
+      }
+      // 解答文をプリロード
+      if (currentItem.answer && !isImageUrl(currentItem.answer)) {
+        preloadAudio(currentItem.answer);
+      }
     }
   }
   
@@ -1798,8 +1864,15 @@ function preloadNextQuestions() {
     var nextIndex = currentQuestionIndex + i;
     if (nextIndex >= 0 && nextIndex < currentCategoryData.length) {
       var nextItem = currentCategoryData[nextIndex];
-      if (nextItem && nextItem.answer) {
-        preloadAudio(nextItem.answer);
+      if (nextItem) {
+        // 出題文をプリロード
+        if (nextItem.question && !isImageUrl(nextItem.question)) {
+          preloadAudio(nextItem.question);
+        }
+        // 解答文をプリロード
+        if (nextItem.answer && !isImageUrl(nextItem.answer)) {
+          preloadAudio(nextItem.answer);
+        }
       }
     }
   }
