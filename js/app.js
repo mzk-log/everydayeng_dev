@@ -189,9 +189,98 @@ function setButtonImages() {
 function setBackgroundImage() {
   var backgroundImage = document.getElementById('backgroundImage');
   if (backgroundImage) {
-    // ローカル画像を使用
-    backgroundImage.style.backgroundImage = 'url("img/bg.jpg")';
+    // localStorageから保存された背景画像を取得
+    var savedBackgroundImage = localStorage.getItem('customBackgroundImage');
+    if (savedBackgroundImage) {
+      backgroundImage.style.backgroundImage = 'url(' + savedBackgroundImage + ')';
+    } else {
+      // デフォルトのローカル画像を使用
+      backgroundImage.style.backgroundImage = 'url("img/bg.jpg")';
+    }
+    
+    // 画像そのもののfilterプロパティを削除（念のため）
+    backgroundImage.style.filter = '';
+    
+    // 保存された明るさ設定を適用
+    var savedBrightness = localStorage.getItem('backgroundBrightness');
+    if (savedBrightness) {
+      // 旧形式（数値）の場合は新形式に変換
+      var brightnessLevel;
+      if (savedBrightness === 'dark' || savedBrightness === 'bright') {
+        brightnessLevel = savedBrightness;
+      } else {
+        // 旧形式の数値から新形式に変換
+        var oldLevel = parseInt(savedBrightness);
+        if (oldLevel >= 1 && oldLevel <= 5) {
+          // 4以下は「暗い」、5は「明るい」
+          brightnessLevel = oldLevel <= 4 ? 'dark' : 'bright';
+        } else {
+          brightnessLevel = 'bright'; // デフォルト（明るい）
+        }
+      }
+      setBackgroundBrightness(brightnessLevel, false);
+    } else {
+      // デフォルトは「明るい」
+      setBackgroundBrightness('bright', false);
+    }
+    
+    // ボタンの初期状態を更新（setBackgroundBrightness内で既に更新されているが、念のため）
+    // setBackgroundBrightness内で既にupdateBrightnessButtonsが呼ばれているので、ここでは不要
   }
+}
+
+// 背景画像の明るさを設定（オーバーレイの透明度を変更）
+function setBackgroundBrightness(level, saveToStorage) {
+  // level: 'dark'(暗い) または 'bright'(明るい)
+  var overlayOpacityValues = {
+    'dark': 0.15,   // 暗い（現状の4に相当）
+    'bright': 0.0   // 明るい（現状の5に相当、完全透明）
+  };
+  
+  // levelが有効かチェックし、対応するopacityを取得
+  var opacity;
+  if (overlayOpacityValues.hasOwnProperty(level)) {
+    opacity = overlayOpacityValues[level];
+  } else {
+    opacity = 0.0; // デフォルト値（明るい）
+  }
+  
+  var backgroundOverlay = document.querySelector('.background-overlay');
+  
+  if (backgroundOverlay) {
+    var colorValue = opacity === 0 ? 'rgba(0, 0, 0, 0)' : 'rgba(0, 0, 0, ' + opacity + ')';
+    backgroundOverlay.style.backgroundColor = colorValue;
+  }
+  
+  // 画像そのもののfilterプロパティを削除
+  var backgroundImage = document.getElementById('backgroundImage');
+  if (backgroundImage) {
+    backgroundImage.style.filter = '';
+  }
+  
+  // ボタンのアクティブ状態を更新
+  updateBrightnessButtons(level);
+  
+  // localStorageに保存（saveToStorageがtrueの場合、または未指定の場合）
+  if (saveToStorage !== false) {
+    try {
+      localStorage.setItem('backgroundBrightness', level);
+    } catch (e) {
+      console.warn('明るさ設定の保存に失敗しました。');
+    }
+  }
+}
+
+// 明るさボタンのアクティブ状態を更新
+function updateBrightnessButtons(activeLevel) {
+  var brightnessButtons = document.querySelectorAll('.brightness-button');
+  brightnessButtons.forEach(function(button) {
+    if (button.dataset.brightness === activeLevel) {
+      button.classList.add('brightness-button-active');
+    } else {
+      button.classList.remove('brightness-button-active');
+    }
+  });
 }
 
 // カテゴリ一覧を読み込む（最優先）
@@ -445,10 +534,60 @@ function setupEventListeners() {
     }
   });
   
-  // 背景画像変更ボタン（機能は未実装）
+  // 背景画像変更ボタン（アコーディオン）
   document.getElementById('changeBackgroundButton').addEventListener('click', function() {
-    // 将来的に実装
+    toggleBackgroundSubmenu();
+  });
+  
+  // 背景画像を選択ボタン
+  document.getElementById('selectBackgroundButton').addEventListener('click', function() {
     closeSideMenu();
+    openBackgroundImageSelector();
+  });
+  
+  // 初期値に戻すボタン
+  document.getElementById('resetBackgroundButton').addEventListener('click', function() {
+    resetBackgroundImage();
+    closeSideMenu();
+  });
+  
+  // 明るさ変更ボタン
+  var brightnessButtons = document.querySelectorAll('.brightness-button');
+  brightnessButtons.forEach(function(button) {
+    button.addEventListener('click', function() {
+      var brightness = this.dataset.brightness; // 'dark' または 'bright'
+      setBackgroundBrightness(brightness);
+    });
+  });
+  
+  // ファイル選択inputのイベント
+  document.getElementById('backgroundImageFileInput').addEventListener('change', function(e) {
+    var file = e.target.files[0];
+    if (file) {
+      handleBackgroundImageSelection(file);
+    }
+  });
+  
+  // 背景画像プレビューモーダルの閉じるボタン
+  document.getElementById('backgroundPreviewCloseButton').addEventListener('click', function() {
+    closeBackgroundPreviewModal();
+  });
+  
+  // 背景画像プレビューモーダルのキャンセルボタン
+  document.getElementById('backgroundPreviewCancelButton').addEventListener('click', function() {
+    closeBackgroundPreviewModal();
+  });
+  
+  // 背景画像プレビューモーダルの確定ボタン
+  document.getElementById('backgroundPreviewConfirmButton').addEventListener('click', function() {
+    confirmBackgroundImage();
+  });
+  
+  // 背景画像プレビューモーダルのオーバーレイクリックで閉じる
+  document.getElementById('backgroundPreviewModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeBackgroundPreviewModal();
+    }
   });
 }
 
@@ -488,6 +627,186 @@ function toggleSideMenu() {
   } else {
     openSideMenu();
   }
+}
+
+// 背景画像選択を開く
+// 背景画像サブメニューをトグル
+function toggleBackgroundSubmenu() {
+  var submenu = document.getElementById('backgroundSubmenu');
+  var parentButton = document.getElementById('changeBackgroundButton');
+  if (submenu && parentButton) {
+    var isActive = submenu.classList.contains('active');
+    if (isActive) {
+      submenu.classList.remove('active');
+      parentButton.classList.remove('active');
+    } else {
+      submenu.classList.add('active');
+      parentButton.classList.add('active');
+    }
+  }
+}
+
+function openBackgroundImageSelector() {
+  var fileInput = document.getElementById('backgroundImageFileInput');
+  if (fileInput) {
+    fileInput.click();
+  }
+}
+
+// 背景画像を初期値に戻す
+function resetBackgroundImage() {
+  try {
+    // localStorageから削除
+    localStorage.removeItem('customBackgroundImage');
+    localStorage.removeItem('backgroundBrightness');
+    
+    // 背景画像をデフォルトに戻す
+    var backgroundImage = document.getElementById('backgroundImage');
+    if (backgroundImage) {
+      backgroundImage.style.backgroundImage = 'url("img/bg.jpg")';
+      backgroundImage.style.filter = '';
+    }
+    
+    // オーバーレイを「明るい」に戻す
+    var backgroundOverlay = document.querySelector('.background-overlay');
+    if (backgroundOverlay) {
+      backgroundOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0)';
+    }
+    
+    // 明るさボタンを「明るい」に戻す
+    setBackgroundBrightness('bright', false);
+  } catch (e) {
+    showError('背景画像のリセットに失敗しました。');
+  }
+}
+
+// 背景画像選択時の処理
+function handleBackgroundImageSelection(file) {
+  if (!file.type.match('image.*')) {
+    showError('画像ファイルを選択してください。');
+    return;
+  }
+  
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var imageDataUrl = e.target.result;
+    showBackgroundPreview(imageDataUrl);
+  };
+  reader.onerror = function() {
+    showError('画像の読み込みに失敗しました。');
+  };
+  reader.readAsDataURL(file);
+}
+
+// 背景画像プレビューを表示
+function showBackgroundPreview(imageDataUrl) {
+  var previewImage = document.getElementById('backgroundPreviewImage');
+  var previewModal = document.getElementById('backgroundPreviewModal');
+  
+  if (previewImage && previewModal) {
+    // 画像を圧縮してからプレビューに表示
+    compressImageToDataURL(imageDataUrl, 500, function(compressedDataUrl) {
+      previewImage.src = compressedDataUrl;
+      previewModal.classList.add('active');
+      // 圧縮後のデータを一時保存（確定時に使用）
+      previewImage.dataset.compressedData = compressedDataUrl;
+    });
+  }
+}
+
+// 背景画像プレビューモーダルを閉じる
+function closeBackgroundPreviewModal() {
+  var previewModal = document.getElementById('backgroundPreviewModal');
+  if (previewModal) {
+    previewModal.classList.remove('active');
+  }
+  // ファイル選択inputをリセット
+  var fileInput = document.getElementById('backgroundImageFileInput');
+  if (fileInput) {
+    fileInput.value = '';
+  }
+}
+
+// 背景画像を確定
+function confirmBackgroundImage() {
+  var previewImage = document.getElementById('backgroundPreviewImage');
+  if (previewImage && previewImage.dataset.compressedData) {
+    var compressedDataUrl = previewImage.dataset.compressedData;
+    
+    // localStorageに保存
+    try {
+      localStorage.setItem('customBackgroundImage', compressedDataUrl);
+      
+      // 背景画像を更新
+      var backgroundImage = document.getElementById('backgroundImage');
+      if (backgroundImage) {
+        backgroundImage.style.backgroundImage = 'url(' + compressedDataUrl + ')';
+      }
+      
+      // プレビューモーダルを閉じる
+      closeBackgroundPreviewModal();
+    } catch (e) {
+      showError('背景画像の保存に失敗しました。ストレージの容量が不足している可能性があります。');
+    }
+  }
+}
+
+// 画像を500KB以下に圧縮
+function compressImageToDataURL(dataUrl, maxSizeKB, callback) {
+  var maxSizeBytes = maxSizeKB * 1024;
+  var img = new Image();
+  
+  img.onload = function() {
+    var canvas = document.createElement('canvas');
+    var ctx = canvas.getContext('2d');
+    
+    // 画像のサイズを取得
+    var width = img.width;
+    var height = img.height;
+    
+    // 最大サイズを超える場合はリサイズ
+    var maxDimension = 1920; // 最大幅・高さ
+    if (width > maxDimension || height > maxDimension) {
+      var ratio = Math.min(maxDimension / width, maxDimension / height);
+      width = width * ratio;
+      height = height * ratio;
+    }
+    
+    canvas.width = width;
+    canvas.height = height;
+    
+    // 画像を描画
+    ctx.drawImage(img, 0, 0, width, height);
+    
+    // 品質を調整しながら圧縮（二分探索）
+    var quality = 0.9;
+    var minQuality = 0.1;
+    var maxQuality = 0.9;
+    var compressedDataUrl = null;
+    
+    function compress() {
+      var dataUrl = canvas.toDataURL('image/jpeg', quality);
+      var size = (dataUrl.length * 3) / 4; // Base64のサイズをバイト数に変換（概算）
+      
+      if (size <= maxSizeBytes || quality <= minQuality) {
+        compressedDataUrl = dataUrl;
+        callback(compressedDataUrl);
+      } else {
+        // 品質を下げて再試行
+        maxQuality = quality;
+        quality = (quality + minQuality) / 2;
+        compress();
+      }
+    }
+    
+    compress();
+  };
+  
+  img.onerror = function() {
+    showError('画像の読み込みに失敗しました。');
+  };
+  
+  img.src = dataUrl;
 }
 
 // カテゴリデータを読み込む

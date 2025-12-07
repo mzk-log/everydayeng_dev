@@ -135,6 +135,10 @@
   overflow-y: auto;
 }
 
+.side-menu-item-container {
+  width: 100%;
+}
+
 .side-menu-item {
   width: 100%;
   padding: 15px 20px;
@@ -146,6 +150,9 @@
   cursor: pointer;
   transition: background-color 0.2s ease;
   border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .side-menu-item:hover {
@@ -156,10 +163,111 @@
   background-color: #e0e0e0;
 }
 
-/* 学習画面（screen2）ではハンバーガーメニューを非表示 */
-body:has(#screen2.active) .hamburger-menu-button {
-  display: none;
+.side-menu-item-text {
+  flex: 1;
 }
+
+.side-menu-item-arrow {
+  font-size: 12px;
+  transition: transform 0.3s ease;
+  margin-left: 10px;
+}
+
+.side-menu-item-parent.active .side-menu-item-arrow {
+  transform: rotate(180deg);
+}
+
+.side-menu-submenu {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  background-color: #f9f9f9;
+}
+
+.side-menu-submenu.active {
+  max-height: 200px;
+}
+
+.side-menu-submenu-item {
+  width: 100%;
+  padding: 12px 20px 12px 40px;
+  border: none;
+  background-color: transparent;
+  text-align: left;
+  font-size: 15px;
+  color: #555;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid #f0f0f0;
+  display: block;
+}
+
+.side-menu-submenu-item:hover {
+  background-color: #f0f0f0;
+}
+
+.side-menu-submenu-item:active {
+  background-color: #e0e0e0;
+}
+
+.side-menu-brightness-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 20px 12px 40px !important;
+}
+
+.side-menu-brightness-label {
+  font-size: 15px;
+  color: #555;
+  margin-bottom: 5px;
+}
+
+.side-menu-brightness-controls {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.brightness-button {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border: 2px solid #ddd;
+  background-color: #fff;
+  color: #333;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brightness-button:hover {
+  background-color: #f5f5f5;
+  border-color: #999;
+}
+
+.brightness-button:active {
+  background-color: #e0e0e0;
+}
+
+.brightness-button-active {
+  background-color: #4CAF50 !important;
+  color: #fff !important;
+  border-color: #4CAF50 !important;
+}
+
+.brightness-button-active:hover {
+  background-color: #45a049 !important;
+  border-color: #45a049 !important;
+}
+
+/* 学習画面（screen2）でもハンバーガーメニューを表示 */
 
 /* ページローディングオーバーレイ */
 .page-loading-overlay {
@@ -241,6 +349,17 @@ body {
   background-size: cover;
   z-index: -1;
   /* 背景画像はJavaScriptで動的に設定 */
+}
+
+/* 背景画像のオーバーレイ（テキストの可読性向上用） */
+.background-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* background-colorはJavaScriptで動的に設定 */
+  z-index: 0;
 }
 
 /* コンテナ */
@@ -1671,6 +1790,76 @@ body:has(#screen2.active) .login-button {
   cursor: default;
 }
 
+/* 背景画像プレビューモーダル */
+.background-preview-section {
+  text-align: center;
+}
+
+.background-preview-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #000;
+}
+
+.background-preview-image-container {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto 20px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #f5f5f5;
+}
+
+.background-preview-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  max-height: 400px;
+  object-fit: contain;
+}
+
+.background-preview-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.background-preview-button {
+  padding: 12px 30px;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.background-preview-cancel {
+  background-color: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.background-preview-cancel:hover {
+  background-color: #e0e0e0;
+}
+
+.background-preview-confirm {
+  background-color: #4CAF50;
+  color: #fff;
+}
+
+.background-preview-confirm:hover {
+  background-color: #45a049;
+}
+
+.background-preview-button:active {
+  transform: scale(0.98);
+}
+
 /* 画像モーダル閉じるボタン */
 .image-modal-close-button {
   position: absolute;
@@ -1973,6 +2162,53 @@ body:has(#screen2.active) .login-button {
     margin-right: 5px !important;
   }
 
+  /* 背景画像プレビューモーダル(480px) */
+  .background-preview-title {
+    font-size: 16px !important;
+  }
+
+  .background-preview-image-container {
+    max-width: 100% !important;
+  }
+
+  .background-preview-image {
+    max-height: 300px !important;
+  }
+
+  .background-preview-button {
+    padding: 10px 20px !important;
+    font-size: 14px !important;
+  }
+
+  .background-preview-buttons {
+    gap: 10px !important;
+  }
+
+  .side-menu-submenu-item {
+    padding: 10px 15px 10px 35px !important;
+    font-size: 14px !important;
+  }
+
+  .side-menu-brightness-item {
+    padding: 10px 15px 10px 35px !important;
+  }
+
+  .side-menu-brightness-label {
+    font-size: 14px !important;
+  }
+
+  .brightness-button {
+    min-width: 32px !important;
+    height: 32px !important;
+    font-size: 13px !important;
+    padding: 0 6px !important;
+  }
+
+  .side-menu-brightness-controls {
+    gap: 6px !important;
+  }
+}
+
   /* リスト表示用サムネイル(480px) */
   .list-thumbnail {
     max-width: 80px;
@@ -2037,5 +2273,10 @@ body:has(#screen2.active) .login-button {
   .side-menu-item {
     padding: 12px 15px !important;
     font-size: 15px !important;
+  }
+
+  .side-menu-submenu-item {
+    padding: 10px 15px 10px 35px !important;
+    font-size: 14px !important;
   }
 }

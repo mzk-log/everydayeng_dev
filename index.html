@@ -17,7 +17,9 @@
       <div class="page-loading-spinner"></div>
     </div>
   </div>
-  <div class="background-image" id="backgroundImage"></div>
+  <div class="background-image" id="backgroundImage">
+    <div class="background-overlay"></div>
+  </div>
   <!-- ハンバーガーメニューボタン -->
   <button id="hamburgerMenuButton" class="hamburger-menu-button" type="button" aria-label="メニュー">
     <img src="img/menu.png" alt="メニュー" class="hamburger-icon">
@@ -31,9 +33,27 @@
         <button id="sideMenuCloseButton" class="side-menu-close-button" type="button" aria-label="閉じる">×</button>
       </div>
       <div class="side-menu-body">
-        <button class="side-menu-item" type="button" id="changeBackgroundButton">
-          背景画像の変更
-        </button>
+        <div class="side-menu-item-container">
+          <button class="side-menu-item side-menu-item-parent" type="button" id="changeBackgroundButton">
+            <span class="side-menu-item-text">背景画像の変更</span>
+            <span class="side-menu-item-arrow">▼</span>
+          </button>
+          <div class="side-menu-submenu" id="backgroundSubmenu">
+            <button class="side-menu-submenu-item" type="button" id="selectBackgroundButton">
+              背景画像を選択
+            </button>
+            <div class="side-menu-submenu-item side-menu-brightness-item">
+              <span class="side-menu-brightness-label">明るさ変更</span>
+              <div class="side-menu-brightness-controls">
+                <button class="brightness-button" data-brightness="dark" type="button">暗い</button>
+                <button class="brightness-button brightness-button-active" data-brightness="bright" type="button">明るい</button>
+              </div>
+            </div>
+            <button class="side-menu-submenu-item" type="button" id="resetBackgroundButton">
+              初期値に戻す
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -216,6 +236,28 @@
       </div>
     </div>
   </div>
+
+  <!-- 背景画像プレビューモーダル -->
+  <div id="backgroundPreviewModal" class="modal-overlay">
+    <div class="modal-container">
+      <button class="modal-close-button" id="backgroundPreviewCloseButton" type="button">×</button>
+      <div class="modal-content">
+        <div class="background-preview-section">
+          <h3 class="background-preview-title">背景画像のプレビュー</h3>
+          <div class="background-preview-image-container">
+            <img id="backgroundPreviewImage" class="background-preview-image" src="" alt="プレビュー画像">
+          </div>
+          <div class="background-preview-buttons">
+            <button class="background-preview-button background-preview-cancel" id="backgroundPreviewCancelButton" type="button">キャンセル</button>
+            <button class="background-preview-button background-preview-confirm" id="backgroundPreviewConfirmButton" type="button">確定</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ファイル選択input（非表示） -->
+  <input type="file" id="backgroundImageFileInput" accept="image/*" style="display: none;">
 
   <script src="js/app.js"></script>
 </body>
