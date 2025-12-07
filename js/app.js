@@ -422,6 +422,72 @@ function setupEventListeners() {
   document.getElementById('listNextButton').addEventListener('click', function() {
     navigateToNextCategory();
   });
+  
+  // ハンバーガーメニューボタン
+  document.getElementById('hamburgerMenuButton').addEventListener('click', function() {
+    toggleSideMenu();
+  });
+  
+  // サイドメニュー閉じるボタン
+  document.getElementById('sideMenuCloseButton').addEventListener('click', function() {
+    closeSideMenu();
+  });
+  
+  // サイドメニューオーバーレイクリックで閉じる
+  document.querySelector('.side-menu-overlay').addEventListener('click', function() {
+    closeSideMenu();
+  });
+  
+  // ESCキーでサイドメニューを閉じる
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeSideMenu();
+    }
+  });
+  
+  // 背景画像変更ボタン（機能は未実装）
+  document.getElementById('changeBackgroundButton').addEventListener('click', function() {
+    // 将来的に実装
+    closeSideMenu();
+  });
+}
+
+// サイドメニューを開く
+function openSideMenu() {
+  var sideMenu = document.getElementById('sideMenu');
+  var hamburgerButton = document.getElementById('hamburgerMenuButton');
+  if (sideMenu) {
+    sideMenu.classList.add('active');
+  }
+  if (hamburgerButton) {
+    hamburgerButton.classList.add('active');
+  }
+  // メニューが開いている間は背景のスクロールを無効化
+  document.body.style.overflow = 'hidden';
+}
+
+// サイドメニューを閉じる
+function closeSideMenu() {
+  var sideMenu = document.getElementById('sideMenu');
+  var hamburgerButton = document.getElementById('hamburgerMenuButton');
+  if (sideMenu) {
+    sideMenu.classList.remove('active');
+  }
+  if (hamburgerButton) {
+    hamburgerButton.classList.remove('active');
+  }
+  // メニューが閉じたら背景のスクロールを有効化
+  document.body.style.overflow = '';
+}
+
+// サイドメニューをトグル
+function toggleSideMenu() {
+  var sideMenu = document.getElementById('sideMenu');
+  if (sideMenu && sideMenu.classList.contains('active')) {
+    closeSideMenu();
+  } else {
+    openSideMenu();
+  }
 }
 
 // カテゴリデータを読み込む

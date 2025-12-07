@@ -5,6 +5,162 @@
   box-sizing: border-box;
 }
 
+/* ハンバーガーメニューボタン */
+.hamburger-menu-button {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  width: 20px;
+  height: 20px;
+  background-color: #FFFFFF;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  z-index: 250;
+  transition: opacity 0.3s ease;
+}
+
+.hamburger-menu-button:hover {
+  opacity: 0.7;
+}
+
+.hamburger-menu-button:active {
+  opacity: 0.5;
+}
+
+.hamburger-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* サイドメニュー */
+.side-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 240;
+  display: none;
+  pointer-events: none;
+}
+
+.side-menu.active {
+  display: block;
+  pointer-events: auto;
+}
+
+.side-menu-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.side-menu.active .side-menu-overlay {
+  opacity: 1;
+}
+
+.side-menu-content {
+  position: absolute;
+  top: 0;
+  left: -280px;
+  width: 280px;
+  height: 100%;
+  background-color: #fff;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+  transition: left 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.side-menu.active .side-menu-content {
+  left: 0;
+}
+
+.side-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #ddd;
+  background-color: #f5f5f5;
+  flex-shrink: 0;
+}
+
+.side-menu-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  margin: 0;
+}
+
+.side-menu-close-button {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background-color: transparent;
+  font-size: 24px;
+  color: #333;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.side-menu-close-button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.side-menu-close-button:active {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.side-menu-body {
+  flex: 1;
+  padding: 10px 0;
+  overflow-y: auto;
+}
+
+.side-menu-item {
+  width: 100%;
+  padding: 15px 20px;
+  border: none;
+  background-color: transparent;
+  text-align: left;
+  font-size: 16px;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.side-menu-item:hover {
+  background-color: #f5f5f5;
+}
+
+.side-menu-item:active {
+  background-color: #e0e0e0;
+}
+
+/* 学習画面（screen2）ではハンバーガーメニューを非表示 */
+body:has(#screen2.active) .hamburger-menu-button {
+  display: none;
+}
+
 /* ページローディングオーバーレイ */
 .page-loading-overlay {
   position: fixed;
@@ -1845,5 +2001,41 @@ body:has(#screen2.active) .login-button {
   .toggle-group {
     flex-direction: column !important;
     gap: 10px !important;
+  }
+
+  /* ハンバーガーメニューボタン(480px) */
+  .hamburger-menu-button {
+    width: 20px !important;
+    height: 20px !important;
+    top: 8px !important;
+    left: 8px !important;
+    z-index: 250 !important;
+  }
+
+  /* サイドメニュー(480px) */
+  .side-menu {
+    z-index: 240 !important;
+  }
+  
+  .side-menu-content {
+    width: 260px !important;
+    left: -260px !important;
+  }
+  
+  .side-menu.active .side-menu-content {
+    left: 0 !important;
+  }
+
+  .side-menu-header {
+    padding: 12px 15px !important;
+  }
+
+  .side-menu-title {
+    font-size: 16px !important;
+  }
+
+  .side-menu-item {
+    padding: 12px 15px !important;
+    font-size: 15px !important;
   }
 }
