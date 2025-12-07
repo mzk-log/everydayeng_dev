@@ -237,6 +237,21 @@
     </div>
   </div>
 
+  <!-- 背景画像選択モーダル -->
+  <div id="backgroundSelectModal" class="modal-overlay">
+    <div class="modal-container">
+      <button class="modal-close-button" id="backgroundSelectCloseButton" type="button">×</button>
+      <div class="modal-content">
+        <div class="background-select-section">
+          <h3 class="background-select-title">背景画像を選択</h3>
+          <div id="backgroundImageGrid" class="background-image-grid">
+            <!-- 画像一覧がここに動的に追加されます -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 背景画像プレビューモーダル -->
   <div id="backgroundPreviewModal" class="modal-overlay">
     <div class="modal-container">
@@ -255,9 +270,6 @@
       </div>
     </div>
   </div>
-
-  <!-- ファイル選択input（非表示） -->
-  <input type="file" id="backgroundImageFileInput" accept="image/*" style="display: none;">
 
   <script src="js/app.js"></script>
 </body>

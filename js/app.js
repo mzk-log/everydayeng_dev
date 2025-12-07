@@ -34,6 +34,15 @@ var MAX_CACHE_SIZE = 10 * 1024 * 1024; // 最大キャッシュサイズ（10MB�
 // 注意: Gas_Main.gsをWebアプリとして公開した際のURLを設定してください
 var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxTBkXrUOsYjzb1xERU-GXe5g8w9f0lxqOyxn6P8-VC9zNDMtjmTXOKRH_lBnRra3Kzcw/exec'; // ここにGoogle Apps ScriptのWebアプリURLを設定してください
 
+// img/bgフォルダ内の背景画像ファイル一覧
+var BACKGROUND_IMAGE_FILES = [
+  'bg.jpg',
+  'bg-rightbluegr.jpg',
+  'bg-rightbluegrF1.jpg',
+  'bg-rightgreengr.jpg',
+  'bg-rightpinkgr.jpg'
+];
+
 // 学習完了メッセージの定数配列
 var COMPLETION_MESSAGES = [
   'Good job!',
@@ -191,11 +200,27 @@ function setBackgroundImage() {
   if (backgroundImage) {
     // localStorageから保存された背景画像を取得
     var savedBackgroundImage = localStorage.getItem('customBackgroundImage');
-    if (savedBackgroundImage) {
-      backgroundImage.style.backgroundImage = 'url(' + savedBackgroundImage + ')';
+    // 有効な値かチェック（空文字列、null、undefined、不正な値を除外）
+    if (savedBackgroundImage && 
+        savedBackgroundImage.trim() !== '' && 
+        savedBackgroundImage !== 'null' && 
+        savedBackgroundImage !== 'undefined' &&
+        (savedBackgroundImage.startsWith('data:') || savedBackgroundImage.includes('img/bg/'))) {
+      // URLが既に引用符で囲まれている場合はそのまま、そうでない場合は追加
+      var urlValue = savedBackgroundImage;
+      if (!urlValue.startsWith('"') && !urlValue.startsWith("'")) {
+        if (urlValue.startsWith('img/bg/')) {
+          urlValue = '"' + urlValue + '"';
+        }
+      }
+      backgroundImage.style.backgroundImage = 'url(' + urlValue + ')';
     } else {
       // デフォルトのローカル画像を使用
-      backgroundImage.style.backgroundImage = 'url("img/bg.jpg")';
+      backgroundImage.style.backgroundImage = 'url("img/bg/bg.jpg")';
+      // 不正な値が保存されていた場合は削除
+      if (savedBackgroundImage) {
+        localStorage.removeItem('customBackgroundImage');
+      }
     }
     
     // 画像そのもののfilterプロパティを削除（念のため）
@@ -545,6 +570,18 @@ function setupEventListeners() {
     openBackgroundImageSelector();
   });
   
+  // 背景画像選択モーダルの閉じるボタン
+  document.getElementById('backgroundSelectCloseButton').addEventListener('click', function() {
+    closeBackgroundSelectModal();
+  });
+  
+  // 背景画像選択モーダルのオーバーレイクリックで閉じる
+  document.getElementById('backgroundSelectModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeBackgroundSelectModal();
+    }
+  });
+  
   // 初期値に戻すボタン
   document.getElementById('resetBackgroundButton').addEventListener('click', function() {
     resetBackgroundImage();
@@ -560,13 +597,16 @@ function setupEventListeners() {
     });
   });
   
-  // ファイル選択inputのイベント
-  document.getElementById('backgroundImageFileInput').addEventListener('change', function(e) {
-    var file = e.target.files[0];
-    if (file) {
-      handleBackgroundImageSelection(file);
-    }
-  });
+  // ファイル選択inputのイベント（存在する場合のみ）
+  var backgroundImageFileInput = document.getElementById('backgroundImageFileInput');
+  if (backgroundImageFileInput) {
+    backgroundImageFileInput.addEventListener('change', function(e) {
+      var file = e.target.files[0];
+      if (file) {
+        handleBackgroundImageSelection(file);
+      }
+    });
+  }
   
   // 背景画像プレビューモーダルの閉じるボタン
   document.getElementById('backgroundPreviewCloseButton').addEventListener('click', function() {
@@ -646,10 +686,99 @@ function toggleBackgroundSubmenu() {
   }
 }
 
+// 背景画像選択モーダルを開く
 function openBackgroundImageSelector() {
-  var fileInput = document.getElementById('backgroundImageFileInput');
-  if (fileInput) {
-    fileInput.click();
+  var selectModal = document.getElementById('backgroundSelectModal');
+  var imageGrid = document.getElementById('backgroundImageGrid');
+  
+  if (selectModal && imageGrid) {
+    // 画像グリッドをクリア
+    imageGrid.innerHTML = '';
+    
+    // 現在選択されている背景画像を取得
+    var currentBackground = localStorage.getItem('customBackgroundImage');
+    var currentImageName = null;
+    
+    // localStorageに保存がない場合は、デフォルトのbg.jpgを使用
+    if (!currentBackground) {
+      currentImageName = 'bg.jpg';
+    } else if (currentBackground && currentBackground.startsWith('data:')) {
+      // DataURLの場合は、デフォルト画像かどうか確認
+      var defaultImage = document.getElementById('backgroundImage');
+      if (defaultImage) {
+        var defaultUrl = defaultImage.style.backgroundImage;
+        if (defaultUrl && defaultUrl.includes('img/bg/')) {
+          // デフォルト画像の場合はファイル名を抽出
+          var match = defaultUrl.match(/img\/bg\/([^"']+)/);
+          if (match) {
+            currentImageName = match[1];
+          } else {
+            currentImageName = 'bg.jpg'; // デフォルト
+          }
+        } else {
+          currentImageName = 'bg.jpg'; // デフォルト
+        }
+      } else {
+        currentImageName = 'bg.jpg'; // デフォルト
+      }
+    } else if (currentBackground && currentBackground.includes('img/bg/')) {
+      // パスからファイル名を抽出
+      var match = currentBackground.match(/img\/bg\/([^"']+)/);
+      if (match) {
+        currentImageName = match[1];
+      } else {
+        currentImageName = 'bg.jpg'; // デフォルト
+      }
+    } else {
+      // その他の場合はデフォルト
+      currentImageName = 'bg.jpg';
+    }
+    
+    // 各画像をグリッドに追加
+    BACKGROUND_IMAGE_FILES.forEach(function(filename) {
+      var imageItem = document.createElement('div');
+      imageItem.className = 'background-image-item';
+      if (filename === currentImageName || (!currentImageName && filename === 'bg.jpg')) {
+        imageItem.classList.add('selected');
+      }
+      
+      var img = document.createElement('img');
+      img.src = 'img/bg/' + filename;
+      img.alt = filename;
+      img.onerror = function() {
+        this.style.display = 'none';
+      };
+      
+      imageItem.appendChild(img);
+      
+      // クリックイベント
+      imageItem.addEventListener('click', function() {
+        // 選択状態を更新
+        var allItems = imageGrid.querySelectorAll('.background-image-item');
+        allItems.forEach(function(item) {
+          item.classList.remove('selected');
+        });
+        imageItem.classList.add('selected');
+        
+        // 選択した画像をプレビュー表示
+        var imageUrl = 'img/bg/' + filename;
+        showBackgroundPreview(imageUrl);
+        closeBackgroundSelectModal();
+      });
+      
+      imageGrid.appendChild(imageItem);
+    });
+    
+    // モーダルを表示
+    selectModal.classList.add('active');
+  }
+}
+
+// 背景画像選択モーダルを閉じる
+function closeBackgroundSelectModal() {
+  var selectModal = document.getElementById('backgroundSelectModal');
+  if (selectModal) {
+    selectModal.classList.remove('active');
   }
 }
 
@@ -663,7 +792,7 @@ function resetBackgroundImage() {
     // 背景画像をデフォルトに戻す
     var backgroundImage = document.getElementById('backgroundImage');
     if (backgroundImage) {
-      backgroundImage.style.backgroundImage = 'url("img/bg.jpg")';
+      backgroundImage.style.backgroundImage = 'url("img/bg/bg.jpg")';
       backgroundImage.style.filter = '';
     }
     
@@ -699,18 +828,28 @@ function handleBackgroundImageSelection(file) {
 }
 
 // 背景画像プレビューを表示
-function showBackgroundPreview(imageDataUrl) {
+function showBackgroundPreview(imageUrl) {
   var previewImage = document.getElementById('backgroundPreviewImage');
   var previewModal = document.getElementById('backgroundPreviewModal');
   
   if (previewImage && previewModal) {
-    // 画像を圧縮してからプレビューに表示
-    compressImageToDataURL(imageDataUrl, 500, function(compressedDataUrl) {
-      previewImage.src = compressedDataUrl;
+    // 画像URLがDataURLか通常のURLかを判定
+    if (imageUrl.startsWith('data:')) {
+      // DataURLの場合は圧縮してからプレビューに表示
+      compressImageToDataURL(imageUrl, 500, function(compressedDataUrl) {
+        previewImage.src = compressedDataUrl;
+        previewModal.classList.add('active');
+        // 圧縮後のデータを一時保存（確定時に使用）
+        previewImage.dataset.compressedData = compressedDataUrl;
+        previewImage.dataset.imageUrl = ''; // 通常のURLではないことを示す
+      });
+    } else {
+      // 通常のURLの場合はそのまま表示
+      previewImage.src = imageUrl;
       previewModal.classList.add('active');
-      // 圧縮後のデータを一時保存（確定時に使用）
-      previewImage.dataset.compressedData = compressedDataUrl;
-    });
+      previewImage.dataset.compressedData = ''; // DataURLではないことを示す
+      previewImage.dataset.imageUrl = imageUrl; // 通常のURLを保存
+    }
   }
 }
 
@@ -730,17 +869,36 @@ function closeBackgroundPreviewModal() {
 // 背景画像を確定
 function confirmBackgroundImage() {
   var previewImage = document.getElementById('backgroundPreviewImage');
-  if (previewImage && previewImage.dataset.compressedData) {
-    var compressedDataUrl = previewImage.dataset.compressedData;
+  if (previewImage) {
+    var imageUrl;
+    
+    // DataURLか通常のURLかを判定
+    if (previewImage.dataset.compressedData) {
+      // DataURLの場合
+      imageUrl = previewImage.dataset.compressedData;
+    } else if (previewImage.dataset.imageUrl) {
+      // 通常のURLの場合
+      imageUrl = previewImage.dataset.imageUrl;
+    } else {
+      showError('画像の情報が取得できませんでした。');
+      return;
+    }
     
     // localStorageに保存
     try {
-      localStorage.setItem('customBackgroundImage', compressedDataUrl);
+      localStorage.setItem('customBackgroundImage', imageUrl);
       
       // 背景画像を更新
       var backgroundImage = document.getElementById('backgroundImage');
       if (backgroundImage) {
-        backgroundImage.style.backgroundImage = 'url(' + compressedDataUrl + ')';
+        // URLが既に引用符で囲まれている場合はそのまま、そうでない場合は追加
+        var urlValue = imageUrl;
+        if (!urlValue.startsWith('"') && !urlValue.startsWith("'")) {
+          if (urlValue.startsWith('img/bg/')) {
+            urlValue = '"' + urlValue + '"';
+          }
+        }
+        backgroundImage.style.backgroundImage = 'url(' + urlValue + ')';
       }
       
       // プレビューモーダルを閉じる
