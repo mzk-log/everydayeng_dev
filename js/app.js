@@ -69,6 +69,7 @@ var COMPLETION_MESSAGE_IMAGES = [
   'msg-sakuranbo-01.png',
   'msg-tatunootoshigo-01.png',
   'msg-sakana-01.png',
+//  'msg-anime-zou-01.gif',
   'msg-uma-01.png'
 ];
 
@@ -989,8 +990,14 @@ function loadCategoryData(categoryNo) {
   // ボタンを無効化
   var prevButton = document.getElementById('listPrevButton');
   var nextButton = document.getElementById('listNextButton');
+  var startButton = document.getElementById('startButton');
   if (prevButton) prevButton.disabled = true;
   if (nextButton) nextButton.disabled = true;
+  if (startButton) startButton.disabled = true;
+  
+  // リストのクリックを無効化
+  var listContainer = document.getElementById('listContainer');
+  if (listContainer) listContainer.style.pointerEvents = 'none';
   
   // Google Apps Script経由でデータを取得
   var params = new URLSearchParams();
@@ -1027,6 +1034,14 @@ function loadCategoryData(categoryNo) {
         // ボタンの状態を更新（表示/非表示と有効/無効を設定）
         updateListNavButtons();
         
+        // STARTボタンを有効化（読み込み完了時）
+        var startButton = document.getElementById('startButton');
+        if (startButton) startButton.disabled = false;
+        
+        // リストのクリックを有効化（読み込み完了時）
+        var listContainer = document.getElementById('listContainer');
+        if (listContainer) listContainer.style.pointerEvents = 'auto';
+        
         // ローディング非表示
         if (loadingSpinner) {
           loadingSpinner.style.display = 'none';
@@ -1039,6 +1054,12 @@ function loadCategoryData(categoryNo) {
         }
         // ボタンの状態を更新（エラー時も無効化のまま）
         updateListNavButtons();
+        // STARTボタンを有効化（エラー時も有効化）
+        var startButton = document.getElementById('startButton');
+        if (startButton) startButton.disabled = false;
+        // リストのクリックを有効化（エラー時も有効化）
+        var listContainer = document.getElementById('listContainer');
+        if (listContainer) listContainer.style.pointerEvents = 'auto';
       }
     })
     .catch(function(error) {
@@ -1049,6 +1070,12 @@ function loadCategoryData(categoryNo) {
       }
       // ボタンの状態を更新（エラー時も無効化のまま）
       updateListNavButtons();
+      // STARTボタンを有効化（エラー時も有効化）
+      var startButton = document.getElementById('startButton');
+      if (startButton) startButton.disabled = false;
+      // リストのクリックを有効化（エラー時も有効化）
+      var listContainer = document.getElementById('listContainer');
+      if (listContainer) listContainer.style.pointerEvents = 'auto';
     });
 }
 
@@ -1146,7 +1173,9 @@ function displayList() {
   
   if (listMessage) listMessage.style.display = 'none';
   if (listContainer) listContainer.style.display = 'block';
-  if (startButton) startButton.style.display = 'block';
+  if (startButton) {
+    startButton.style.display = 'block';
+  }
 }
 
 // 問題の選択/解除をトグル
@@ -2806,15 +2835,40 @@ function showCompletionMessage() {
     
     completionMessageText.textContent = message;
     completionMessageIcon.src = 'img/msg/' + imageFileName;
+    
+    // セクションを即座に表示（テキストは見える）
     completionSection.style.display = 'block';
+    // アイコンを非表示に設定（スペースは確保される）
+    completionMessageIcon.style.visibility = 'hidden';
+    completionMessageIcon.style.opacity = '0';
+    completionMessageIcon.style.transform = 'scale(0.8)';
+    
+    // 350ms後にアイコンをフワッと表示
+    setTimeout(function() {
+      completionMessageIcon.style.visibility = 'visible';
+      // 次のフレームでアニメーションを開始（transitionを確実に適用）
+      requestAnimationFrame(function() {
+        completionMessageIcon.style.opacity = '1';
+        completionMessageIcon.style.transform = 'scale(1)';
+      });
+    }, 350);
   }
 }
 
 // 学習完了メッセージを非表示
 function hideCompletionMessage() {
   var completionSection = document.getElementById('completionMessageSection');
+  var completionMessageIcon = document.getElementById('completionMessageIcon');
   if (completionSection) {
     completionSection.style.display = 'none';
+  }
+  // 画像のsrcをクリア（次回表示時に古い画像が表示されないようにする）
+  if (completionMessageIcon) {
+    completionMessageIcon.src = '';
+    // アイコンの表示状態をリセット（次回表示時に正しく動作するように）
+    completionMessageIcon.style.visibility = '';
+    completionMessageIcon.style.opacity = '';
+    completionMessageIcon.style.transform = '';
   }
 }
 
