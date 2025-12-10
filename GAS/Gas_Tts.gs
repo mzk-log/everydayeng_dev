@@ -135,8 +135,8 @@ function callTextToSpeechAPI(text, languageCode, voiceName, voiceGender, speed) 
   }
   var speedMap = {
     'fast': 1.25,
-    'medium': 1.10,
-    'slow': 1.00
+    'medium': 1.20,
+    'slow': 1.15
   };
   var speakingRate = speedMap[speed];
   if (speakingRate === undefined) {
