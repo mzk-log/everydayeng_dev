@@ -49,9 +49,54 @@
                 <button class="brightness-button brightness-button-active" data-brightness="bright" type="button">明るい</button>
               </div>
             </div>
+            <div class="side-menu-submenu-item side-menu-brightness-item">
+              <span class="side-menu-brightness-label">文字変更</span>
+              <div class="side-menu-brightness-controls">
+                <button class="text-shadow-button text-shadow-button-active" data-text-shadow="off" type="button">影なし</button>
+                <button class="text-shadow-button" data-text-shadow="on" type="button">影あり</button>
+              </div>
+            </div>
             <button class="side-menu-submenu-item" type="button" id="resetBackgroundButton">
               初期値に戻す
             </button>
+          </div>
+        </div>
+        <div class="side-menu-item-container">
+          <button class="side-menu-item side-menu-item-parent" type="button" id="audioSettingsButton">
+            <span class="side-menu-item-text">音声設定</span>
+            <span class="side-menu-item-arrow">▼</span>
+          </button>
+          <div class="side-menu-submenu" id="audioSettingsSubmenu">
+            <div class="side-menu-submenu-item side-menu-brightness-item">
+              <span class="side-menu-brightness-label">出題音声</span>
+              <div class="side-menu-brightness-controls">
+                <button class="audio-voice-button" data-voice-type="question" data-voice-gender="male" type="button">男性</button>
+                <button class="audio-voice-button audio-voice-button-active" data-voice-type="question" data-voice-gender="female" type="button">女性</button>
+              </div>
+            </div>
+            <div class="side-menu-submenu-item side-menu-brightness-item">
+              <span class="side-menu-brightness-label">出題読みの速さ</span>
+              <div class="side-menu-brightness-controls">
+                <button class="audio-speed-button audio-speed-button-active" data-speed-type="question" data-speed-value="fast" type="button">速い</button>
+                <button class="audio-speed-button" data-speed-type="question" data-speed-value="medium" type="button">中</button>
+                <button class="audio-speed-button" data-speed-type="question" data-speed-value="slow" type="button">遅い</button>
+              </div>
+            </div>
+            <div class="side-menu-submenu-item side-menu-brightness-item">
+              <span class="side-menu-brightness-label">解答音声</span>
+              <div class="side-menu-brightness-controls">
+                <button class="audio-voice-button" data-voice-type="answer" data-voice-gender="male" type="button">男性</button>
+                <button class="audio-voice-button audio-voice-button-active" data-voice-type="answer" data-voice-gender="female" type="button">女性</button>
+              </div>
+            </div>
+            <div class="side-menu-submenu-item side-menu-brightness-item">
+              <span class="side-menu-brightness-label">解答読みの速さ</span>
+              <div class="side-menu-brightness-controls">
+                <button class="audio-speed-button audio-speed-button-active" data-speed-type="answer" data-speed-value="fast" type="button">速い</button>
+                <button class="audio-speed-button" data-speed-type="answer" data-speed-value="medium" type="button">中</button>
+                <button class="audio-speed-button" data-speed-type="answer" data-speed-value="slow" type="button">遅い</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

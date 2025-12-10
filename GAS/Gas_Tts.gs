@@ -24,11 +24,30 @@ function detectLanguage(text) {
 /**
  * 言語コードから音声名を取得
  */
-function getVoiceName(languageCode) {
+/**
+ * 言語コードと性別に応じて音声名を取得
+ * @param {string} languageCode - 言語コード（'ja-JP' または 'en-US'）
+ * @param {string} voiceGender - 音声の性別（'male' または 'female'、デフォルト：'female'）
+ * @return {string} 音声名
+ */
+function getVoiceName(languageCode, voiceGender) {
+  // voiceGenderが未定義やnullの場合は'female'として扱う
+  if (!voiceGender || typeof voiceGender !== 'string') {
+    voiceGender = 'female';
+  }
+  
   if (languageCode === 'ja-JP') {
-    return 'ja-JP-Neural2-B'; // 日本語女性
+    if (voiceGender === 'male') {
+      return 'ja-JP-Neural2-D'; // 日本語男性
+    } else {
+      return 'ja-JP-Neural2-B'; // 日本語女性
+    }
   } else {
-    return 'en-US-Neural2-F'; // 英語女性
+    if (voiceGender === 'male') {
+      return 'en-US-Neural2-J'; // 英語男性
+    } else {
+      return 'en-US-Neural2-F'; // 英語女性
+    }
   }
 }
 
@@ -85,8 +104,13 @@ function convertTextToSSML(text) {
 
 /**
  * Cloud Text-to-Speech APIを呼び出す
+ * @param {string} text - 読み上げるテキスト
+ * @param {string} languageCode - 言語コード（'ja-JP' または 'en-US'）
+ * @param {string} voiceName - 音声名
+ * @param {string} voiceGender - 音声の性別（'male' または 'female'、デフォルト：'female'）
+ * @param {string} speed - 読み上げの速さ（'fast', 'medium', 'slow'、デフォルト：'fast'）
  */
-function callTextToSpeechAPI(text, languageCode, voiceName) {
+function callTextToSpeechAPI(text, languageCode, voiceName, voiceGender, speed) {
   // テキストをSSML形式に変換（空白を <break> タグに置き換え）
   var ssml = convertTextToSSML(text);
   
@@ -97,22 +121,45 @@ function callTextToSpeechAPI(text, languageCode, voiceName) {
     throw new Error('API key is not set. Please run setApiKey() function first.');
   }
   
+  // 音声の性別を設定（デフォルト値：'female'）
+  // voiceGenderが未定義やnullの場合は'female'として扱う
+  if (!voiceGender || typeof voiceGender !== 'string') {
+    voiceGender = 'female';
+  }
+  var gender = (voiceGender === 'male') ? 'MALE' : 'FEMALE';
+  
+  // 読み上げの速さを設定（デフォルト値：1.25）
+  // speedが未定義やnullの場合は'fast'として扱う
+  if (!speed || typeof speed !== 'string') {
+    speed = 'fast';
+  }
+  var speedMap = {
+    'fast': 1.25,
+    'medium': 1.10,
+    'slow': 1.00
+  };
+  var speakingRate = speedMap[speed];
+  if (speakingRate === undefined) {
+    speakingRate = 1.25; // デフォルト値
+  }
+  
   // Cloud Text-to-Speech APIのエンドポイント
   var url = 'https://texttospeech.googleapis.com/v1/text:synthesize?key=' + apiKey;
   
   // リクエストボディ（SSML形式を使用）
+  // 注意: nameを指定する場合はssmlGenderは不要（音声名に性別が含まれている）
   var requestBody = {
     input: {
       ssml: ssml  // text の代わりに ssml を使用
     },
     voice: {
       languageCode: languageCode,
-      name: voiceName,
-      ssmlGender: 'FEMALE'
+      name: voiceName
+      // ssmlGenderは使用しない（nameに性別が含まれているため）
     },
     audioConfig: {
       audioEncoding: 'MP3',
-      speakingRate: 1.25,
+      speakingRate: speakingRate,
       pitch: 0.0,
       volumeGainDb: 0.0
     }

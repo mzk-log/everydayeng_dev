@@ -111,7 +111,7 @@ function doPost(e) {
       if (emailError) {
         return emailError;
       }
-      return processTTS(text);
+      return processTTS(text, params);
     }
     
     // actionパラメータがある場合 → DATA処理（データ取得）
@@ -148,34 +148,50 @@ function doPost(e) {
 
 /**
  * TTS処理（音声生成）
+ * @param {string} text - 読み上げるテキスト
+ * @param {Object} params - リクエストパラメータ（voiceGender, speedを含む）
  */
-function processTTS(text) {
-  // テキストを正規化（空白の処理）
-  text = normalizeTextForTTS(text);
-  
-  // 入力検証
-  if (text.length > MAX_TEXT_LENGTH) {
-    return createErrorResponse('Text length exceeds maximum limit of ' + MAX_TEXT_LENGTH + ' characters');
+function processTTS(text, params) {
+  try {
+    // テキストを正規化（空白の処理）
+    text = normalizeTextForTTS(text);
+    
+    // 入力検証
+    if (text.length > MAX_TEXT_LENGTH) {
+      return createErrorResponse('Text length exceeds maximum limit of ' + MAX_TEXT_LENGTH + ' characters');
+    }
+    
+    // 言語を自動判定
+    var languageCode = detectLanguage(text);
+    
+    // 音声設定を取得（デフォルト値：女性、fast）
+    var voiceGender = (params && params.voiceGender) ? params.voiceGender : 'female';
+    var speed = (params && params.speed) ? params.speed : 'fast';
+    
+    // 性別に応じて音声名を取得
+    var voiceName = getVoiceName(languageCode, voiceGender);
+    
+    // Cloud Text-to-Speech APIを呼び出し
+    var audioContent = callTextToSpeechAPI(text, languageCode, voiceName, voiceGender, speed);
+    
+    if (!audioContent) {
+      return createErrorResponse('Failed to generate speech');
+    }
+    
+    // 音声データを返す
+    return ContentService.createTextOutput(JSON.stringify({
+      success: true,
+      audioContent: audioContent,
+      language: languageCode,
+      voiceName: voiceName
+    })).setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    // 詳細なエラー情報はログに記録（内部のみ）
+    Logger.log('[Error] processTTS exception: ' + error.toString());
+    Logger.log('[Error] Stack trace: ' + error.stack);
+    // ユーザーには一般的なエラーメッセージを返す
+    return createErrorResponse('Failed to generate speech: ' + error.toString());
   }
-  
-  // 言語を自動判定
-  var languageCode = detectLanguage(text);
-  var voiceName = getVoiceName(languageCode);
-  
-  // Cloud Text-to-Speech APIを呼び出し
-  var audioContent = callTextToSpeechAPI(text, languageCode, voiceName);
-  
-  if (!audioContent) {
-    return createErrorResponse('Failed to generate speech');
-  }
-  
-  // 音声データを返す
-  return ContentService.createTextOutput(JSON.stringify({
-    success: true,
-    audioContent: audioContent,
-    language: languageCode,
-    voiceName: voiceName
-  })).setMimeType(ContentService.MimeType.JSON);
 }
 
 /**

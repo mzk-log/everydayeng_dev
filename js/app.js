@@ -565,6 +565,33 @@ function setupEventListeners() {
     toggleBackgroundSubmenu();
   });
   
+  // 音声設定のアコーディオンメニュー
+  document.getElementById('audioSettingsButton').addEventListener('click', function() {
+    toggleAudioSettingsSubmenu();
+  });
+  
+  // 音声ボタン（出題音声・解答音声）
+  var audioVoiceButtons = document.querySelectorAll('.audio-voice-button');
+  audioVoiceButtons.forEach(function(button) {
+    button.addEventListener('click', function() {
+      var voiceType = this.dataset.voiceType; // 'question' または 'answer'
+      var voiceGender = this.dataset.voiceGender; // 'male' または 'female'
+      updateAudioVoiceButtons(voiceType, voiceGender);
+      setAudioVoice(voiceType, voiceGender);
+    });
+  });
+  
+  // 速さボタン（出題読みの速さ・解答読みの速さ）
+  var audioSpeedButtons = document.querySelectorAll('.audio-speed-button');
+  audioSpeedButtons.forEach(function(button) {
+    button.addEventListener('click', function() {
+      var speedType = this.dataset.speedType; // 'question' または 'answer'
+      var speedValue = this.dataset.speedValue; // 'fast', 'medium', 'slow'
+      updateAudioSpeedButtons(speedType, speedValue);
+      setAudioSpeed(speedType, speedValue);
+    });
+  });
+  
   // 背景画像を選択ボタン
   document.getElementById('selectBackgroundButton').addEventListener('click', function() {
     closeSideMenu();
@@ -684,6 +711,147 @@ function toggleBackgroundSubmenu() {
       submenu.classList.add('active');
       parentButton.classList.add('active');
     }
+  }
+}
+
+// 音声設定サブメニューをトグル
+function toggleAudioSettingsSubmenu() {
+  var submenu = document.getElementById('audioSettingsSubmenu');
+  var parentButton = document.getElementById('audioSettingsButton');
+  if (submenu && parentButton) {
+    var isActive = submenu.classList.contains('active');
+    if (isActive) {
+      submenu.classList.remove('active');
+      parentButton.classList.remove('active');
+    } else {
+      submenu.classList.add('active');
+      parentButton.classList.add('active');
+    }
+  }
+}
+
+// 音声ボタンのアクティブ状態を更新
+function updateAudioVoiceButtons(voiceType, activeGender) {
+  var allVoiceButtons = document.querySelectorAll('.audio-voice-button');
+  allVoiceButtons.forEach(function(button) {
+    if (button.dataset.voiceType === voiceType) {
+      if (button.dataset.voiceGender === activeGender) {
+        button.classList.add('audio-voice-button-active');
+      } else {
+        button.classList.remove('audio-voice-button-active');
+      }
+    }
+  });
+}
+
+// 速さボタンのアクティブ状態を更新
+function updateAudioSpeedButtons(speedType, activeValue) {
+  var allSpeedButtons = document.querySelectorAll('.audio-speed-button');
+  allSpeedButtons.forEach(function(button) {
+    if (button.dataset.speedType === speedType) {
+      if (button.dataset.speedValue === activeValue) {
+        button.classList.add('audio-speed-button-active');
+      } else {
+        button.classList.remove('audio-speed-button-active');
+      }
+    }
+  });
+}
+
+// 音声設定を保存（localStorage）
+function setAudioVoice(voiceType, gender) {
+  try {
+    var key = 'audioVoice_' + voiceType; // 'audioVoice_question' または 'audioVoice_answer'
+    localStorage.setItem(key, gender);
+    // 設定変更時にキャッシュをクリア
+    clearAudioCache();
+  } catch (e) {
+    console.warn('音声設定の保存に失敗しました。');
+  }
+}
+
+// 速さ設定を保存（localStorage）
+function setAudioSpeed(speedType, speed) {
+  try {
+    var key = 'audioSpeed_' + speedType; // 'audioSpeed_question' または 'audioSpeed_answer'
+    localStorage.setItem(key, speed);
+    // 設定変更時にキャッシュをクリア
+    clearAudioCache();
+  } catch (e) {
+    console.warn('速さ設定の保存に失敗しました。');
+  }
+}
+
+// 音声設定を取得（localStorage、デフォルト値：女性）
+function getAudioVoice(voiceType) {
+  try {
+    var key = 'audioVoice_' + voiceType;
+    var saved = localStorage.getItem(key);
+    return saved || 'female'; // デフォルト値：女性
+  } catch (e) {
+    return 'female'; // デフォルト値：女性
+  }
+}
+
+// 速さ設定を取得（localStorage、デフォルト値：fast）
+function getAudioSpeed(speedType) {
+  try {
+    var key = 'audioSpeed_' + speedType;
+    var saved = localStorage.getItem(key);
+    return saved || 'fast'; // デフォルト値：fast
+  } catch (e) {
+    return 'fast'; // デフォルト値：fast
+  }
+}
+
+// 速さの値をspeakingRateに変換
+function getSpeakingRate(speed) {
+  var speedMap = {
+    'fast': 1.25,
+    'medium': 1.0,
+    'slow': 0.9
+  };
+  return speedMap[speed] || 1.25; // デフォルト値：1.25
+}
+
+// 音声設定を読み込み（localStorageから）
+function loadAudioSettings() {
+  // 出題音声
+  var questionVoice = getAudioVoice('question');
+  updateAudioVoiceButtons('question', questionVoice);
+  
+  // 出題読みの速さ
+  var questionSpeed = getAudioSpeed('question');
+  updateAudioSpeedButtons('question', questionSpeed);
+  
+  // 解答音声
+  var answerVoice = getAudioVoice('answer');
+  updateAudioVoiceButtons('answer', answerVoice);
+  
+  // 解答読みの速さ
+  var answerSpeed = getAudioSpeed('answer');
+  updateAudioSpeedButtons('answer', answerSpeed);
+}
+
+// 音声キャッシュをクリア
+function clearAudioCache() {
+  // メモリキャッシュをクリア
+  audioCache = {};
+  
+  // localStorageのキャッシュをクリア
+  try {
+    var keysToRemove = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var key = localStorage.key(i);
+      if (key && key.startsWith(CACHE_PREFIX)) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(function(key) {
+      localStorage.removeItem(key);
+    });
+  } catch (e) {
+    console.warn('キャッシュのクリアに失敗しました。', e);
   }
 }
 
@@ -1952,8 +2120,13 @@ function playAnswer() {
     return;
   }
   
-  // キャッシュから音声データを取得
-  var cachedAudio = getCachedAudio(text);
+  // 出題/解答に応じて設定を取得
+  var isQuestion = !isAnswerShown;
+  var voiceGender = isQuestion ? getAudioVoice('question') : getAudioVoice('answer');
+  var speed = isQuestion ? getAudioSpeed('question') : getAudioSpeed('answer');
+  
+  // キャッシュから音声データを取得（設定情報を含む）
+  var cachedAudio = getCachedAudio(text, voiceGender, speed);
   if (cachedAudio) {
     // キャッシュから即座に再生
     playAudioFromCache(cachedAudio);
@@ -1961,30 +2134,36 @@ function playAnswer() {
   }
   
   // キャッシュにない場合はAPI呼び出し
-  fetchAudioFromAPI(text);
+  fetchAudioFromAPI(text, voiceGender, speed);
 }
 
 /**
  * キャッシュから音声データを取得
  * メモリキャッシュ → localStorage の順で確認
+ * @param {string} text - 読み上げるテキスト
+ * @param {string} voiceGender - 音声の性別（'male' または 'female'）
+ * @param {string} speed - 読み上げの速さ（'fast', 'medium', 'slow'）
  */
-function getCachedAudio(text) {
+function getCachedAudio(text, voiceGender, speed) {
   // テキストを正規化（キャッシュキーは正規化後のテキストで生成）
   var normalizedText = normalizeTextForTTS(text);
   
+  // キャッシュキーに設定情報を含める（設定が変わると別キャッシュになる）
+  var cacheKey = normalizedText + '_' + (voiceGender || 'female') + '_' + (speed || 'fast');
+  
   // メモリキャッシュを確認
-  if (audioCache[normalizedText]) {
-    return audioCache[normalizedText];
+  if (audioCache[cacheKey]) {
+    return audioCache[cacheKey];
   }
   
   // localStorageを確認
   try {
-    var cacheKey = CACHE_PREFIX + hashText(normalizedText);
-    var cachedData = localStorage.getItem(cacheKey);
+    var storageKey = CACHE_PREFIX + hashText(cacheKey);
+    var cachedData = localStorage.getItem(storageKey);
     if (cachedData) {
       var audioData = JSON.parse(cachedData);
       // メモリキャッシュにも保存
-      audioCache[normalizedText] = audioData;
+      audioCache[cacheKey] = audioData;
       return audioData;
     }
   } catch (e) {
@@ -1997,23 +2176,30 @@ function getCachedAudio(text) {
 
 /**
  * 音声データをキャッシュに保存
+ * @param {string} text - 読み上げるテキスト
+ * @param {string} audioContent - 音声データ（base64）
+ * @param {string} voiceGender - 音声の性別（'male' または 'female'）
+ * @param {string} speed - 読み上げの速さ（'fast', 'medium', 'slow'）
  */
-function saveAudioToCache(text, audioContent) {
+function saveAudioToCache(text, audioContent, voiceGender, speed) {
   // テキストを正規化（キャッシュキーは正規化後のテキストで生成）
   var normalizedText = normalizeTextForTTS(text);
+  
+  // キャッシュキーに設定情報を含める
+  var cacheKey = normalizedText + '_' + voiceGender + '_' + speed;
   
   var audioData = {
     audioContent: audioContent,
     timestamp: Date.now(),
-    textHash: hashText(normalizedText)  // メモリキャッシュ削除時の照合用
+    textHash: hashText(cacheKey)  // メモリキャッシュ削除時の照合用
   };
   
-  // メモリキャッシュに保存
-  audioCache[normalizedText] = audioData;
+  // メモリキャッシュに保存（設定情報を含むキーで保存）
+  audioCache[cacheKey] = audioData;
   
   // localStorageに保存（サイズ制限を考慮）
   try {
-    var cacheKey = CACHE_PREFIX + hashText(normalizedText);
+    var storageKey = CACHE_PREFIX + hashText(cacheKey);
     var dataToStore = JSON.stringify(audioData);
     
     // キャッシュサイズをチェック
@@ -2022,14 +2208,15 @@ function saveAudioToCache(text, audioContent) {
       clearOldCacheEntries();
     }
     
-    localStorage.setItem(cacheKey, dataToStore);
+    localStorage.setItem(storageKey, dataToStore);
   } catch (e) {
     // localStorageが満杯の場合やエラーが発生した場合は無視
     console.warn('Cache save error:', e);
     // 古いキャッシュを削除して再試行
     try {
       clearOldCacheEntries();
-      localStorage.setItem(cacheKey, JSON.stringify(audioData));
+      var storageKey = CACHE_PREFIX + hashText(cacheKey);
+      localStorage.setItem(storageKey, JSON.stringify(audioData));
     } catch (e2) {
       // それでも失敗した場合はメモリキャッシュのみ使用
       console.warn('Cache save retry failed:', e2);
@@ -2290,14 +2477,19 @@ function hidePlayButtonLoading() {
 
 /**
  * APIから音声データを取得
+ * @param {string} text - 読み上げるテキスト
+ * @param {string} voiceGender - 音声の性別（'male' または 'female'）
+ * @param {string} speed - 読み上げの速さ（'fast', 'medium', 'slow'）
  */
-function fetchAudioFromAPI(text) {
+function fetchAudioFromAPI(text, voiceGender, speed) {
   // ローディング表示を開始
   showPlayButtonLoading();
   
   // リクエストパラメータを準備
   var params = new URLSearchParams();
   params.append('text', text);
+  params.append('voiceGender', voiceGender || 'female'); // デフォルト値：女性
+  params.append('speed', speed || 'fast'); // デフォルト値：fast
   params.append('email', userEmail); // TTS処理にもメール認証を追加
   params.append('referer', window.location.origin);
   
@@ -2320,8 +2512,8 @@ function fetchAudioFromAPI(text) {
     hidePlayButtonLoading();
     
     if (data.success && data.audioContent) {
-      // キャッシュに保存
-      saveAudioToCache(text, data.audioContent);
+      // キャッシュに保存（設定情報を含む）
+      saveAudioToCache(text, data.audioContent, voiceGender || 'female', speed || 'fast');
       
       // 音声データ（base64）を再生
       try {
@@ -2407,13 +2599,17 @@ function preloadAudioForCurrentAndNext() {
   if (currentQuestionIndex >= 0 && currentQuestionIndex < currentCategoryData.length) {
     var currentItem = currentCategoryData[currentQuestionIndex];
     if (currentItem) {
-      // 出題文をプリロード
+      // 出題文をプリロード（出題用設定）
       if (currentItem.question && !isImageUrl(currentItem.question)) {
-        preloadAudio(currentItem.question);
+        var questionVoice = getAudioVoice('question');
+        var questionSpeed = getAudioSpeed('question');
+        preloadAudio(currentItem.question, questionVoice, questionSpeed);
       }
-      // 解答文をプリロード
+      // 解答文をプリロード（解答用設定）
       if (currentItem.answer && !isImageUrl(currentItem.answer)) {
-        preloadAudio(currentItem.answer);
+        var answerVoice = getAudioVoice('answer');
+        var answerSpeed = getAudioSpeed('answer');
+        preloadAudio(currentItem.answer, answerVoice, answerSpeed);
       }
     }
   }
@@ -2437,13 +2633,17 @@ function preloadNextQuestions() {
     if (nextIndex >= 0 && nextIndex < currentCategoryData.length) {
       var nextItem = currentCategoryData[nextIndex];
       if (nextItem) {
-        // 出題文をプリロード
+        // 出題文をプリロード（出題用設定）
         if (nextItem.question && !isImageUrl(nextItem.question)) {
-          preloadAudio(nextItem.question);
+          var questionVoice = getAudioVoice('question');
+          var questionSpeed = getAudioSpeed('question');
+          preloadAudio(nextItem.question, questionVoice, questionSpeed);
         }
-        // 解答文をプリロード
+        // 解答文をプリロード（解答用設定）
         if (nextItem.answer && !isImageUrl(nextItem.answer)) {
-          preloadAudio(nextItem.answer);
+          var answerVoice = getAudioVoice('answer');
+          var answerSpeed = getAudioSpeed('answer');
+          preloadAudio(nextItem.answer, answerVoice, answerSpeed);
         }
       }
     }
@@ -2452,14 +2652,17 @@ function preloadNextQuestions() {
 
 /**
  * 指定されたテキストの音声をプリロード（バックグラウンドで非同期実行）
+ * @param {string} text - 読み上げるテキスト
+ * @param {string} voiceGender - 音声の性別（'male' または 'female'）
+ * @param {string} speed - 読み上げの速さ（'fast', 'medium', 'slow'）
  */
-function preloadAudio(text) {
+function preloadAudio(text, voiceGender, speed) {
   if (!text || !text.trim()) {
     return;
   }
   
-  // キャッシュに既に存在する場合はスキップ
-  var cachedAudio = getCachedAudio(text);
+  // キャッシュに既に存在する場合はスキップ（設定情報を含む）
+  var cachedAudio = getCachedAudio(text, voiceGender || 'female', speed || 'fast');
   if (cachedAudio) {
     return; // 既にキャッシュされている
   }
@@ -2473,6 +2676,8 @@ function preloadAudio(text) {
     
     var params = new URLSearchParams();
     params.append('text', text);
+    params.append('voiceGender', voiceGender || 'female'); // デフォルト値：女性
+    params.append('speed', speed || 'fast'); // デフォルト値：fast
     params.append('email', userEmail); // TTS処理にもメール認証を追加
     params.append('referer', window.location.origin);
     
@@ -2491,8 +2696,8 @@ function preloadAudio(text) {
     })
     .then(function(data) {
       if (data && data.success && data.audioContent) {
-        // キャッシュに保存（再生はしない）
-        saveAudioToCache(text, data.audioContent);
+        // キャッシュに保存（再生はしない、設定情報を含む）
+        saveAudioToCache(text, data.audioContent, voiceGender || 'female', speed || 'fast');
       }
     })
     .catch(function(error) {

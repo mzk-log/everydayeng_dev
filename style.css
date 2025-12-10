@@ -267,6 +267,49 @@
   border-color: #45a049 !important;
 }
 
+/* 音声設定ボタン（明るさ変更ボタンと同じスタイル） */
+.audio-voice-button,
+.audio-speed-button {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border: 2px solid #ddd;
+  background-color: #fff;
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.audio-voice-button:hover,
+.audio-speed-button:hover {
+  background-color: #f5f5f5;
+  border-color: #999;
+}
+
+.audio-voice-button:active,
+.audio-speed-button:active {
+  background-color: #e0e0e0;
+}
+
+.audio-voice-button-active,
+.audio-speed-button-active {
+  background-color: #4CAF50 !important;
+  color: #fff !important;
+  border-color: #4CAF50 !important;
+}
+
+.audio-voice-button-active:hover,
+.audio-speed-button-active:hover {
+  background-color: #45a049 !important;
+  border-color: #45a049 !important;
+}
+
 /* 学習画面（screen2）でもハンバーガーメニューを表示 */
 
 /* ページローディングオーバーレイ */
@@ -2285,6 +2328,14 @@ body:has(#screen2.active) .login-button {
   }
 
   .brightness-button {
+    min-width: 32px !important;
+    height: 32px !important;
+    font-size: 13px !important;
+    padding: 0 6px !important;
+  }
+
+  .audio-voice-button,
+  .audio-speed-button {
     min-width: 32px !important;
     height: 32px !important;
     font-size: 13px !important;
