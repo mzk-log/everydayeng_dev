@@ -69,7 +69,7 @@ var COMPLETION_MESSAGE_IMAGES = [
   'msg-sakuranbo-01.png',
   'msg-tatunootoshigo-01.png',
   'msg-sakana-01.png',
-//  'msg-anime-zou-01.gif',
+  'msg-anime-zou-01.gif',
   'msg-uma-01.png'
 ];
 
@@ -3048,7 +3048,7 @@ function showCompletionMessage() {
     completionMessageIcon.style.opacity = '0';
     completionMessageIcon.style.transform = 'scale(0.8)';
     
-    // 350ms後にアイコンをフワッと表示
+    // **ms後にアイコンをフワッと表示
     setTimeout(function() {
       completionMessageIcon.style.visibility = 'visible';
       // 次のフレームでアニメーションを開始（transitionを確実に適用）
@@ -3056,7 +3056,7 @@ function showCompletionMessage() {
         completionMessageIcon.style.opacity = '1';
         completionMessageIcon.style.transform = 'scale(1)';
       });
-    }, 350);
+    }, 500);
   }
 }
 
