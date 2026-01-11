@@ -1,0 +1,7 @@
+# Google Apps Script files (git add . から除外)
+GAS
+spec
+
+Gas_Main.gs
+Gas_Data.gs
+Gas_Tts.gs
