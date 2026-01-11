@@ -37,7 +37,10 @@ var MAX_CACHE_SIZE = 10 * 1024 * 1024; // 最大キャッシュサイズ（10MB�
 
 // Google Apps Script WebアプリのURL（統合版：TTSとDATAの両方を処理）
 // 注意: Gas_Main.gsをWebアプリとして公開した際のURLを設定してください
-var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwysmu_TOO2CywifujRaRTGSZ-DE1GcOw2iZExPpdGPLweR2UBZp-5KPktHy3Ju9t58Gg/exec'; // ここにGoogle Apps ScriptのWebアプリURLを設定してください
+// ここにGoogle Apps ScriptのWebアプリURLを設定してください
+var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwysmu_TOO2CywifujRaRTGSZ-DE1GcOw2iZExPpdGPLweR2UBZp-5KPktHy3Ju9t58Gg/exec';  //DEV用
+//var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxTBkXrUOsYjzb1xERU-GXe5g8w9f0lxqOyxn6P8-VC9zNDMtjmTXOKRH_lBnRra3Kzcw/exec';  //PRD用
+
 
 // img/bgフォルダ内の背景画像ファイル一覧
 var BACKGROUND_IMAGE_FILES = [
