@@ -914,6 +914,180 @@ tr:last-child td {
   box-sizing: border-box;
 }
 
+/* 更新モード用のテキストエリア */
+.answer-text-edit {
+  font-size: 18px;
+  margin: 5px 0;
+  padding: 12px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 2px solid #4CAF50;
+  border-radius: 8px;
+  width: 100%;
+  min-height: 150px;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+/* 更新モード用のコントロールボタン */
+.answer-update-controls {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.answer-update-button,
+.answer-end-button {
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.answer-update-button {
+  background-color: #4CAF50;
+  color: #fff;
+}
+
+.answer-update-button:hover {
+  background-color: #45a049;
+}
+
+.answer-update-button:active {
+  background-color: #3d8b40;
+}
+
+.answer-end-button {
+  background-color: #f44336;
+  color: #fff;
+}
+
+.answer-end-button:hover {
+  background-color: #da190b;
+}
+
+.answer-end-button:active {
+  background-color: #c62828;
+}
+
+/* マイクボタン */
+.answer-mic-button {
+  width: 44px;
+  height: 44px;
+  border: 2px solid #4CAF50;
+  background-color: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.answer-mic-button:hover {
+  background-color: #f5f5f5;
+}
+
+.answer-mic-button:active {
+  background-color: #e0e0e0;
+}
+
+.answer-mic-button.recording {
+  background-color: #ffebee;
+  border-color: #f44336;
+  animation: micBlink 1s ease-in-out infinite;
+}
+
+@keyframes micBlink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.mic-icon {
+  font-size: 20px;
+}
+
+/* 更新モード中のグレーアウト */
+.update-mode-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3);
+  z-index: 50;
+  pointer-events: none;
+}
+
+.update-mode-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  position: relative;
+  z-index: 1;
+}
+
+/* 回答メモ更新確認モーダル */
+.answer-update-confirm-section {
+  text-align: center;
+}
+
+.answer-update-confirm-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #000;
+}
+
+.answer-update-confirm-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.answer-update-confirm-button {
+  padding: 12px 30px;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.answer-update-confirm-cancel {
+  background-color: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.answer-update-confirm-cancel:hover {
+  background-color: #e0e0e0;
+}
+
+.answer-update-confirm-ok {
+  background-color: #4CAF50;
+  color: #fff;
+}
+
+.answer-update-confirm-ok:hover {
+  background-color: #45a049;
+}
+
+.answer-update-confirm-button:active {
+  transform: scale(0.98);
+}
+
 /* ノートセクション */
 .note-section {
   margin: 10px 0;

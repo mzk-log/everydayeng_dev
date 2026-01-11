@@ -236,3 +236,80 @@ var CACHE_EXPIRY_SECONDS = 300; // 5分
     }
   }
 
+  /**
+   * Answer列を更新
+   * @param {string} id - 更新対象のID（A列）
+   * @param {string} answer - 更新するAnswer列の内容
+   */
+  function updateAnswerMemo(id, answer) {
+    try {
+      if (!id || id.trim() === '') {
+        return createErrorResponse('ID parameter is required');
+      }
+      
+      // スプレッドシートからデータを取得
+      var sheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+      var dataSheet = sheet.getSheetByName('Data');
+      
+      if (!dataSheet) {
+        return createErrorResponse('Data sheet not found');
+      }
+      
+      // A列（ID）から行を検索
+      var lastRow = dataSheet.getLastRow();
+      if (lastRow < 2) {
+        return createErrorResponse('No data found');
+      }
+      
+      var idRange = dataSheet.getRange(2, 1, lastRow - 1, 1); // A2からA列の最後まで
+      var idValues = idRange.getValues();
+      
+      var targetRow = -1;
+      for (var i = 0; i < idValues.length; i++) {
+        var rowId = idValues[i][0];
+        // 数値の場合は文字列に変換して比較
+        if (typeof rowId === 'number') {
+          rowId = String(rowId);
+        }
+        if (String(rowId) === String(id)) {
+          targetRow = i + 2; // 行番号は1ベース、かつヘッダー行があるため+2
+          break;
+        }
+      }
+      
+      if (targetRow === -1) {
+        return createErrorResponse('ID not found');
+      }
+      
+      // H列（Answer列）を更新
+      var answerCell = dataSheet.getRange(targetRow, 8); // H列は8列目
+      answerCell.setValue(answer || '');
+      
+      // キャッシュをクリア（該当カテゴリのキャッシュを削除）
+      var cache = CacheService.getScriptCache();
+      // カテゴリデータのキャッシュをクリアするため、該当行のカテゴリ番号を取得
+      var categoryNo = dataSheet.getRange(targetRow, 2).getValue(); // B列は2列目
+      if (categoryNo) {
+        if (typeof categoryNo === 'number') {
+          categoryNo = String(categoryNo);
+        }
+        cache.remove('categoryData_' + categoryNo);
+      }
+      // カテゴリ一覧のキャッシュもクリア（設問数が変わる可能性があるため）
+      cache.remove('categories');
+      
+      var result = {
+        success: true,
+        message: 'Answer memo updated successfully'
+      };
+      
+      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+      
+    } catch (error) {
+      // 詳細なエラー情報はログに記録（内部のみ）
+      Logger.log('[Error] updateAnswerMemo exception: ' + error.toString());
+      Logger.log('[Error] Stack trace: ' + error.stack);
+      // ユーザーには一般的なエラーメッセージを返す
+      return createErrorResponse('Failed to update answer memo');
+    }
+  }

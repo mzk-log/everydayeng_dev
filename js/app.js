@@ -22,6 +22,11 @@ var originalCategoryData = []; // 元の全問題データ（出題数表示用�
 var isQuestionToggleActive = false; // 出題読みトグルボタンの状態（ON/OFF）
 var isAnswerToggleActive = false; // 解答読みトグルボタンの状態（ON/OFF）
 var currentAudio = null; // 現在再生中のAudioオブジェクト
+var isUpdateMode = false; // 更新モードかどうか
+var originalAnswerText = ''; // 更新前のAnswer欄の内容
+var mediaRecorder = null; // 音声録音用のMediaRecorder
+var audioChunks = []; // 録音した音声データのチャンク
+var isRecording = false; // 録音中かどうか
 
 // 音声キャッシュ（メモリキャッシュ）
 var audioCache = {};
@@ -32,7 +37,7 @@ var MAX_CACHE_SIZE = 10 * 1024 * 1024; // 最大キャッシュサイズ（10MB�
 
 // Google Apps Script WebアプリのURL（統合版：TTSとDATAの両方を処理）
 // 注意: Gas_Main.gsをWebアプリとして公開した際のURLを設定してください
-var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxTBkXrUOsYjzb1xERU-GXe5g8w9f0lxqOyxn6P8-VC9zNDMtjmTXOKRH_lBnRra3Kzcw/exec'; // ここにGoogle Apps ScriptのWebアプリURLを設定してください
+var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwysmu_TOO2CywifujRaRTGSZ-DE1GcOw2iZExPpdGPLweR2UBZp-5KPktHy3Ju9t58Gg/exec'; // ここにGoogle Apps ScriptのWebアプリURLを設定してください
 
 // img/bgフォルダ内の背景画像ファイル一覧
 var BACKGROUND_IMAGE_FILES = [
@@ -1931,10 +1936,33 @@ function showAnswer() {
   // プラスボタンを有効化（回答表示中、学習完了でない場合）
   updatePlusButton();
   
-  // 解答読みトグルボタンがONの場合、自動再生
-  if (isAnswerToggleActive) {
+  // 解答読みトグルボタンがONの場合、自動再生（更新モード中は再生しない）
+  if (isAnswerToggleActive && !isUpdateMode) {
     playAnswer();
   }
+  
+  // 回答メモ欄にダブルクリックイベントを追加（更新モード開始）
+  setupAnswerDoubleClick();
+}
+
+// 回答メモ欄のダブルクリックイベントを設定
+function setupAnswerDoubleClick() {
+  var answerTextDisplay = document.getElementById('answerTextDisplay');
+  if (answerTextDisplay && !isUpdateMode) {
+    // 既存のイベントリスナーを削除（重複防止）
+    answerTextDisplay.removeEventListener('dblclick', handleAnswerDoubleClick);
+    // ダブルクリックイベントを追加
+    answerTextDisplay.addEventListener('dblclick', handleAnswerDoubleClick);
+  }
+}
+
+// 回答メモ欄のダブルクリック処理
+function handleAnswerDoubleClick(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  // 更新モード開始
+  startUpdateMode();
 }
 
 /**
@@ -3346,3 +3374,445 @@ function updateToggleButtonPosition() {
   toggleContainer.style.top = toggleTop + 'px';
 }
 
+// ========================================
+// 更新モード関連の関数
+// ========================================
+
+// 更新モードを開始
+function startUpdateMode() {
+  if (isUpdateMode) return;
+  
+  var item = currentCategoryData[currentQuestionIndex];
+  if (!item) return;
+  
+  isUpdateMode = true;
+  
+  // 元の内容を保持
+  originalAnswerText = item.answer || '';
+  
+  // 回答表示欄を非表示
+  var answerTextDisplay = document.getElementById('answerTextDisplay');
+  if (answerTextDisplay) {
+    answerTextDisplay.style.display = 'none';
+  }
+  
+  // 編集用テキストエリアを表示
+  var answerTextEdit = document.getElementById('answerTextEdit');
+  if (answerTextEdit) {
+    answerTextEdit.value = originalAnswerText;
+    answerTextEdit.style.display = 'block';
+    answerTextEdit.focus();
+  }
+  
+  // 更新コントロールボタンを表示
+  var answerUpdateControls = document.getElementById('answerUpdateControls');
+  if (answerUpdateControls) {
+    answerUpdateControls.style.display = 'flex';
+  }
+  
+  // 他の要素をグレーアウト
+  applyUpdateModeOverlay();
+  
+  // イベントリスナーを設定
+  setupUpdateModeEventListeners();
+}
+
+// 更新モードを終了
+function endUpdateMode(restoreOriginal) {
+  if (!isUpdateMode) return;
+  
+  isUpdateMode = false;
+  
+  // 編集用テキストエリアを非表示
+  var answerTextEdit = document.getElementById('answerTextEdit');
+  if (answerTextEdit) {
+    answerTextEdit.style.display = 'none';
+  }
+  
+  // 更新コントロールボタンを非表示
+  var answerUpdateControls = document.getElementById('answerUpdateControls');
+  if (answerUpdateControls) {
+    answerUpdateControls.style.display = 'none';
+  }
+  
+  // グレーアウトを解除
+  removeUpdateModeOverlay();
+  
+  // 元の内容を復元する場合
+  if (restoreOriginal) {
+    var item = currentCategoryData[currentQuestionIndex];
+    if (item) {
+      item.answer = originalAnswerText;
+      // 回答表示欄を再表示
+      var answerTextDisplay = document.getElementById('answerTextDisplay');
+      if (answerTextDisplay) {
+        displayImageOrText(answerTextDisplay, originalAnswerText);
+        answerTextDisplay.style.display = 'block';
+      }
+    }
+  } else {
+    // 更新後の内容を表示
+    var answerTextEdit = document.getElementById('answerTextEdit');
+    var item = currentCategoryData[currentQuestionIndex];
+    if (answerTextEdit && item) {
+      item.answer = answerTextEdit.value;
+      var answerTextDisplay = document.getElementById('answerTextDisplay');
+      if (answerTextDisplay) {
+        displayImageOrText(answerTextDisplay, item.answer);
+        answerTextDisplay.style.display = 'block';
+      }
+    }
+  }
+  
+  // 録音を停止（録音中の場合）
+  if (isRecording) {
+    stopVoiceRecognition();
+  }
+}
+
+// 更新モード中のオーバーレイを適用
+function applyUpdateModeOverlay() {
+  // 既存のオーバーレイを削除
+  var existingOverlay = document.getElementById('updateModeOverlay');
+  if (existingOverlay) {
+    existingOverlay.remove();
+  }
+  
+  // オーバーレイを作成
+  var overlay = document.createElement('div');
+  overlay.id = 'updateModeOverlay';
+  overlay.className = 'update-mode-overlay';
+  document.body.appendChild(overlay);
+  
+  // 学習画面の要素をグレーアウト
+  var screen2 = document.getElementById('screen2');
+  if (screen2) {
+    var elementsToDisable = screen2.querySelectorAll('.title, .learning-time, .section:not(.answer-section), .navigation-bar');
+    elementsToDisable.forEach(function(element) {
+      element.classList.add('update-mode-disabled');
+    });
+  }
+}
+
+// 更新モード中のオーバーレイを削除
+function removeUpdateModeOverlay() {
+  var overlay = document.getElementById('updateModeOverlay');
+  if (overlay) {
+    overlay.remove();
+  }
+  
+  // グレーアウトを解除
+  var screen2 = document.getElementById('screen2');
+  if (screen2) {
+    var elementsToEnable = screen2.querySelectorAll('.update-mode-disabled');
+    elementsToEnable.forEach(function(element) {
+      element.classList.remove('update-mode-disabled');
+    });
+  }
+}
+
+// 更新モード用のイベントリスナーを設定
+function setupUpdateModeEventListeners() {
+  // 更新ボタン
+  var updateButton = document.getElementById('answerUpdateButton');
+  if (updateButton) {
+    updateButton.onclick = function() {
+      showUpdateConfirmModal();
+    };
+  }
+  
+  // 終了ボタン
+  var endButton = document.getElementById('answerEndButton');
+  if (endButton) {
+    endButton.onclick = function() {
+      endUpdateMode(true); // 元の内容に復元
+    };
+  }
+  
+  // マイクボタン
+  var micButton = document.getElementById('answerMicButton');
+  if (micButton) {
+    micButton.onclick = function() {
+      toggleVoiceRecognition();
+    };
+  }
+  
+  // 更新確認モーダルの閉じるボタン
+  var closeButton = document.getElementById('answerUpdateConfirmCloseButton');
+  if (closeButton) {
+    closeButton.onclick = function() {
+      closeUpdateConfirmModal();
+    };
+  }
+  
+  // 更新確認モーダルのキャンセルボタン
+  var cancelButton = document.getElementById('answerUpdateConfirmCancelButton');
+  if (cancelButton) {
+    cancelButton.onclick = function() {
+      closeUpdateConfirmModal();
+    };
+  }
+  
+  // 更新確認モーダルの確定ボタン
+  var okButton = document.getElementById('answerUpdateConfirmOkButton');
+  if (okButton) {
+    okButton.onclick = function() {
+      saveAnswerMemo();
+    };
+  }
+  
+  // 更新確認モーダルのオーバーレイクリックで閉じる
+  var modal = document.getElementById('answerUpdateConfirmModal');
+  if (modal) {
+    modal.onclick = function(e) {
+      if (e.target === modal) {
+        closeUpdateConfirmModal();
+      }
+    };
+  }
+}
+
+// 更新確認モーダルを表示
+function showUpdateConfirmModal() {
+  var modal = document.getElementById('answerUpdateConfirmModal');
+  if (modal) {
+    modal.classList.add('active');
+  }
+}
+
+// 更新確認モーダルを閉じる
+function closeUpdateConfirmModal() {
+  var modal = document.getElementById('answerUpdateConfirmModal');
+  if (modal) {
+    modal.classList.remove('active');
+  }
+}
+
+// 回答メモを保存
+function saveAnswerMemo() {
+  var answerTextEdit = document.getElementById('answerTextEdit');
+  if (!answerTextEdit) return;
+  
+  var item = currentCategoryData[currentQuestionIndex];
+  if (!item || !item.id) {
+    showError('IDが見つかりません。');
+    closeUpdateConfirmModal();
+    endUpdateMode(true);
+    return;
+  }
+  
+  var newAnswer = answerTextEdit.value || '';
+  
+  // ローディング表示
+  var okButton = document.getElementById('answerUpdateConfirmOkButton');
+  if (okButton) {
+    okButton.disabled = true;
+    okButton.textContent = '更新中...';
+  }
+  
+  // Google Apps Script経由でスプレッドシートを更新
+  var params = new URLSearchParams();
+  params.append('action', 'updateAnswerMemo');
+  params.append('id', item.id);
+  params.append('answer', newAnswer);
+  params.append('email', userEmail);
+  params.append('referer', window.location.origin);
+  
+  fetch(WEB_APP_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: params
+  })
+  .then(function(response) {
+    if (!response.ok) {
+      throw new Error('ネットワークエラー: ' + response.status);
+    }
+    return response.json();
+  })
+  .then(function(data) {
+    if (okButton) {
+      okButton.disabled = false;
+      okButton.textContent = '確定';
+    }
+    
+    if (data.success) {
+      // 更新成功
+      closeUpdateConfirmModal();
+      endUpdateMode(false); // 更新後の内容を表示
+      
+      // データを更新
+      item.answer = newAnswer;
+    } else {
+      // 更新失敗
+      showError('更新に失敗しました: ' + (data.error || 'Unknown error'));
+      closeUpdateConfirmModal();
+      endUpdateMode(true); // 元の内容に復元
+    }
+  })
+  .catch(function(error) {
+    if (okButton) {
+      okButton.disabled = false;
+      okButton.textContent = '確定';
+    }
+    showError('更新エラー: ' + error.toString());
+    closeUpdateConfirmModal();
+    endUpdateMode(true); // 元の内容に復元
+  });
+}
+
+// ========================================
+// 音声認識関連の関数
+// ========================================
+
+// 音声認識を開始/停止
+function toggleVoiceRecognition() {
+  if (isRecording) {
+    stopVoiceRecognition();
+  } else {
+    startVoiceRecognition();
+  }
+}
+
+// 音声認識を開始
+function startVoiceRecognition() {
+  if (isRecording) return;
+  
+  // マイクアクセス許可を取得
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then(function(stream) {
+      isRecording = true;
+      audioChunks = [];
+      
+      // MediaRecorderを作成
+      var options = { mimeType: 'audio/webm;codecs=opus' };
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        options = { mimeType: 'audio/webm' };
+      }
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        options = {}; // デフォルト形式を使用
+      }
+      
+      mediaRecorder = new MediaRecorder(stream, options);
+      
+      mediaRecorder.ondataavailable = function(event) {
+        if (event.data.size > 0) {
+          audioChunks.push(event.data);
+        }
+      };
+      
+      mediaRecorder.onstop = function() {
+        // 録音が停止したら音声データを処理
+        processRecordedAudio();
+        
+        // ストリームを停止
+        stream.getTracks().forEach(function(track) {
+          track.stop();
+        });
+      };
+      
+      // 録音開始
+      mediaRecorder.start();
+      
+      // マイクボタンのスタイルを更新
+      var micButton = document.getElementById('answerMicButton');
+      if (micButton) {
+        micButton.classList.add('recording');
+      }
+    })
+    .catch(function(error) {
+      showError('マイクアクセスに失敗しました: ' + error.toString());
+    });
+}
+
+// 音声認識を停止
+function stopVoiceRecognition() {
+  if (!isRecording || !mediaRecorder) return;
+  
+  if (mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+  }
+  
+  isRecording = false;
+  
+  // マイクボタンのスタイルを更新
+  var micButton = document.getElementById('answerMicButton');
+  if (micButton) {
+    micButton.classList.remove('recording');
+  }
+}
+
+// 録音した音声データを処理
+function processRecordedAudio() {
+  if (audioChunks.length === 0) return;
+  
+  // Blobを作成
+  var audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+  
+  // Base64エンコード
+  var reader = new FileReader();
+  reader.onloadend = function() {
+    var base64Audio = reader.result.split(',')[1]; // data:audio/webm;base64, の部分を除去
+    
+    // Google Apps Script経由で音声認識APIを呼び出し
+    var params = new URLSearchParams();
+    params.append('action', 'speechToText');
+    params.append('audioContent', base64Audio);
+    params.append('languageCode', 'ja-JP');
+    params.append('email', userEmail);
+    params.append('referer', window.location.origin);
+    
+    // ローディング表示
+    var micButton = document.getElementById('answerMicButton');
+    if (micButton) {
+      micButton.disabled = true;
+    }
+    
+    fetch(WEB_APP_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params
+    })
+    .then(function(response) {
+      if (!response.ok) {
+        throw new Error('ネットワークエラー: ' + response.status);
+      }
+      return response.json();
+    })
+    .then(function(data) {
+      if (micButton) {
+        micButton.disabled = false;
+      }
+      
+      if (data.success && data.text) {
+        // 認識結果をテキストエリアに挿入（カーソル位置に、または末尾に）
+        var answerTextEdit = document.getElementById('answerTextEdit');
+        if (answerTextEdit) {
+          var currentText = answerTextEdit.value;
+          var cursorPos = answerTextEdit.selectionStart;
+          var textBefore = currentText.substring(0, cursorPos);
+          var textAfter = currentText.substring(cursorPos);
+          answerTextEdit.value = textBefore + data.text + textAfter;
+          
+          // カーソル位置を更新
+          var newCursorPos = cursorPos + data.text.length;
+          answerTextEdit.setSelectionRange(newCursorPos, newCursorPos);
+          answerTextEdit.focus();
+        }
+      } else {
+        showError('音声認識に失敗しました: ' + (data.error || 'Unknown error'));
+      }
+    })
+    .catch(function(error) {
+      if (micButton) {
+        micButton.disabled = false;
+      }
+      showError('音声認識エラー: ' + error.toString());
+    });
+  };
+  
+  reader.readAsDataURL(audioBlob);
+}

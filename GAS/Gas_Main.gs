@@ -46,6 +46,7 @@ function doGet(e) {
       }
       return getCategoryData(categoryNo);
     } else {
+      // GETリクエストでは更新系のactionは許可しない（セキュリティのため）
       return createErrorResponse('Invalid action parameter');
     }
     
@@ -114,7 +115,7 @@ function doPost(e) {
       return processTTS(text, params);
     }
     
-    // actionパラメータがある場合 → DATA処理（データ取得）
+    // actionパラメータがある場合 → DATA処理（データ取得・更新）
     if (action) {
       var emailError = validateEmail(params.email || '');
       if (emailError) {
@@ -129,6 +130,20 @@ function doPost(e) {
           return createErrorResponse('categoryNo parameter is required');
         }
         return getCategoryData(categoryNo);
+      } else if (action === 'updateAnswerMemo') {
+        var id = params.id || '';
+        var answer = params.answer || '';
+        if (!id) {
+          return createErrorResponse('id parameter is required');
+        }
+        return updateAnswerMemo(id, answer);
+      } else if (action === 'speechToText') {
+        var audioContent = params.audioContent || '';
+        var languageCode = params.languageCode || 'ja-JP';
+        if (!audioContent) {
+          return createErrorResponse('audioContent parameter is required');
+        }
+        return processSpeechToTextRequest(audioContent, languageCode);
       } else {
         return createErrorResponse('Invalid action parameter');
       }
@@ -362,6 +377,28 @@ function createErrorResponse(message) {
     success: false,
     error: message
   })).setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * Speech-to-Text APIリクエストを処理
+ * @param {string} audioContent - Base64エンコードされた音声データ
+ * @param {string} languageCode - 言語コード
+ */
+function processSpeechToTextRequest(audioContent, languageCode) {
+  try {
+    var recognizedText = processSpeechToText(audioContent, languageCode);
+    
+    return ContentService.createTextOutput(JSON.stringify({
+      success: true,
+      text: recognizedText
+    })).setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    // 詳細なエラー情報はログに記録（内部のみ）
+    Logger.log('[Error] processSpeechToTextRequest exception: ' + error.toString());
+    Logger.log('[Error] Stack trace: ' + error.stack);
+    // ユーザーには一般的なエラーメッセージを返す
+    return createErrorResponse('Failed to recognize speech: ' + error.toString());
+  }
 }
 
 

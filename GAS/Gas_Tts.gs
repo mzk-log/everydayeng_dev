@@ -208,3 +208,84 @@ function callTextToSpeechAPI(text, languageCode, voiceName, voiceGender, speed) 
  * この方法なら、APIキーをコード内に記述する必要がありません。
  */
 
+/**
+ * Cloud Speech-to-Text APIを呼び出して音声をテキストに変換
+ * @param {string} audioContent - Base64エンコードされた音声データ
+ * @param {string} languageCode - 言語コード（デフォルト: 'ja-JP'）
+ * @return {string} 認識されたテキスト
+ */
+function processSpeechToText(audioContent, languageCode) {
+  try {
+    // 言語コードのデフォルト値
+    if (!languageCode || languageCode.trim() === '') {
+      languageCode = 'ja-JP';
+    }
+    
+    // APIキーをPropertiesServiceから取得（TTS_API_KEYを共用）
+    var apiKey = PropertiesService.getScriptProperties().getProperty('TTS_API_KEY');
+    
+    if (!apiKey) {
+      throw new Error('API key is not set. Please set TTS_API_KEY in Script Properties.');
+    }
+    
+    // Cloud Speech-to-Text APIのエンドポイント
+    var url = 'https://speech.googleapis.com/v1/speech:recognize?key=' + apiKey;
+    
+    // リクエストボディ
+    var requestBody = {
+      config: {
+        encoding: 'WEBM_OPUS', // MediaRecorder APIで録音した場合の一般的な形式
+        sampleRateHertz: 48000, // 一般的なサンプルレート
+        languageCode: languageCode,
+        alternativeLanguageCodes: [], // 必要に応じて追加
+        enableAutomaticPunctuation: true, // 自動句読点
+        model: 'default' // デフォルトモデル
+      },
+      audio: {
+        content: audioContent // Base64エンコードされた音声データ
+      }
+    };
+    
+    // APIを呼び出し
+    var options = {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify(requestBody),
+      muteHttpExceptions: true
+    };
+    
+    var response = UrlFetchApp.fetch(url, options);
+    var responseCode = response.getResponseCode();
+    var responseText = response.getContentText();
+    
+    if (responseCode !== 200) {
+      // 詳細なエラー情報はログに記録（内部のみ）
+      Logger.log('[Error] Speech-to-Text API error - Code: ' + responseCode + ', Response: ' + responseText);
+      // ユーザーには一般的なエラーメッセージを返す
+      throw new Error('Speech-to-Text API request failed');
+    }
+    
+    var result = JSON.parse(responseText);
+    
+    // 認識結果を取得
+    if (!result.results || result.results.length === 0) {
+      throw new Error('No recognition results');
+    }
+    
+    // 最初の結果の最初の代替案を取得
+    var firstResult = result.results[0];
+    if (!firstResult.alternatives || firstResult.alternatives.length === 0) {
+      throw new Error('No alternatives in recognition result');
+    }
+    
+    var recognizedText = firstResult.alternatives[0].transcript || '';
+    
+    return recognizedText;
+    
+  } catch (error) {
+    // 詳細なエラー情報はログに記録（内部のみ）
+    Logger.log('[Error] processSpeechToText exception: ' + error.toString());
+    Logger.log('[Error] Stack trace: ' + error.stack);
+    throw error;
+  }
+}

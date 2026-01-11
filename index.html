@@ -194,6 +194,16 @@
             <!-- 空の黒いボックスとして残す -->
           </div>
           <div class="answer-text answer-hidden" id="answerTextDisplay" style="display: none;"></div>
+          <!-- 更新モード用のテキストエリア -->
+          <textarea id="answerTextEdit" class="answer-text-edit" style="display: none;"></textarea>
+          <!-- 更新モード用のボタン -->
+          <div class="answer-update-controls" id="answerUpdateControls" style="display: none;">
+            <button class="answer-update-button" id="answerUpdateButton" type="button">更新</button>
+            <button class="answer-end-button" id="answerEndButton" type="button">終了</button>
+            <button class="answer-mic-button" id="answerMicButton" type="button">
+              <span class="mic-icon">🎤</span>
+            </button>
+          </div>
         </div>
         
         <div class="section note-section" id="noteSection" style="display: none;">
@@ -303,6 +313,22 @@
           <div class="background-preview-buttons">
             <button class="background-preview-button background-preview-cancel" id="backgroundPreviewCancelButton" type="button">キャンセル</button>
             <button class="background-preview-button background-preview-confirm" id="backgroundPreviewConfirmButton" type="button">確定</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 回答メモ更新確認モーダル -->
+  <div id="answerUpdateConfirmModal" class="modal-overlay">
+    <div class="modal-container">
+      <button class="modal-close-button" id="answerUpdateConfirmCloseButton" type="button">×</button>
+      <div class="modal-content">
+        <div class="answer-update-confirm-section">
+          <h3 class="answer-update-confirm-title">回答メモを更新しますか？</h3>
+          <div class="answer-update-confirm-buttons">
+            <button class="answer-update-confirm-button answer-update-confirm-cancel" id="answerUpdateConfirmCancelButton" type="button">キャンセル</button>
+            <button class="answer-update-confirm-button answer-update-confirm-ok" id="answerUpdateConfirmOkButton" type="button">確定</button>
           </div>
         </div>
       </div>
