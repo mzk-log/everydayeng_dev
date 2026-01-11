@@ -983,7 +983,7 @@ tr:last-child td {
   background-color: #fff;
   border-radius: 50%;
   cursor: pointer;
-  display: flex;
+  display: none; /* 音声入力機能は現時点では使用しないため非表示 */
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
